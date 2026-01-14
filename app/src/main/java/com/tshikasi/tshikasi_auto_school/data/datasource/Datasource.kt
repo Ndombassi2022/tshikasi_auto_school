@@ -1,5 +1,6 @@
 package com.tshikasi.tshikasi_auto_school.data.datasource
 
+import co.yml.charts.common.extensions.isNotNull
 import com.tshikasi.tshikasi_auto_school.TshikasiAutoSchool
 import com.tshikasi.tshikasi_auto_school.domain.datasource.*
 import com.tshikasi.tshikasi_auto_school.domain.datasource.AssignmentSubmissionDataSource
@@ -5238,17 +5239,6 @@ class NotificationDataSourceImpl : NotificationDataSource {
 
     override suspend fun createBulkNotifications(notifications: List<NotificationModel>): List<NotificationModel> {
         return try {
-            /*val dataList = notifications.map { n ->
-                buildJsonObject {
-                    put("user_id", n.userId)
-                    put("title", n.title)
-                    put("message", n.message)
-                    put("notification_type", n.notificationType.name)
-                    put("related_id", n.relatedId)
-                    put("related_type", n.relatedType)
-                    put("data", n.data)
-                }
-            }*/
 
             client.postgrest[schema, table]
                 .insert(notifications) {
@@ -5508,6 +5498,5296 @@ class NotificationDataSourceImpl : NotificationDataSource {
             mapOf("delivered" to 0, "read" to 0, "failed" to 0)
         } catch (e: Exception) {
             println("ERRO AO OBTER ESTATÍSTICAS DE ENTREGA DE NOTIFICATIONS: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+
+class PaymentDataSourceImpl : PaymentDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_payment"
+
+    override suspend fun createPayment(payment: PaymentModel): PaymentModel {
+        return try {
+
+            client.postgrest[schema, table]
+                .insert(payment) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<PaymentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR PAYMENT: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getPaymentById(id: Long): PaymentModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<PaymentModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR PAYMENT POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getPaymentByTransactionId(transactionId: String): PaymentModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("transaction_id", transactionId) }
+                }
+                .decodeList<PaymentModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR PAYMENT POR TRANSACTION ID $transactionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getPaymentsByUser(userId: Long, userType: String, page: Int, pageSize: Int): List<PaymentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("user_id", userId)
+                        eq("user_type", userType)
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("payment_date", Order.DESCENDING)
+                }
+                .decodeList<PaymentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR PAYMENTS POR USER $userId ($userType): ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getPaymentsByStatus(status: String, page: Int, pageSize: Int): List<PaymentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", status) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("payment_date", Order.DESCENDING)
+                }
+                .decodeList<PaymentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR PAYMENTS POR STATUS $status: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getPaymentsByDateRange(
+        startDate: String,
+        endDate: String,
+        userId: Long?,
+        page: Int,
+        pageSize: Int
+    ): List<PaymentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        gte("payment_date", startDate)
+                        lte("payment_date", endDate)
+                        userId?.let { eq("user_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("payment_date", Order.DESCENDING)
+                }
+                .decodeList<PaymentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR PAYMENTS POR DATA RANGE $startDate - $endDate: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getRecentPayments(limit: Int): List<PaymentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    limit(limit.toLong())
+                    order("payment_date", Order.DESCENDING)
+                }
+                .decodeList<PaymentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR PAYMENTS RECENTES: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchPayments(query: String, page: Int, pageSize: Int): List<PaymentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        or {
+                            ilike("transaction_id", "%$query%")
+                            ilike("reference", "%$query%")
+                            ilike("status", "%$query%")
+                        }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("payment_date", Order.DESCENDING)
+                }
+                .decodeList<PaymentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR PAYMENTS '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updatePayment(payment: PaymentModel): PaymentModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(payment) {
+                    filter { eq("id", payment.id) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<PaymentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR PAYMENT ${payment.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updatePaymentStatus(id: Long, status: String): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to status)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS DO PAYMENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deletePayment(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR PAYMENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countPaymentsByStatus(): Map<String, Int> {
+        return try {
+            // Placeholder: RPC com group by status
+            mapOf("PENDING" to 0, "COMPLETED" to 0, "FAILED" to 0)
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR PAYMENTS POR STATUS: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getTotalRevenue(startDate: String, endDate: String): Double {
+        return try {
+            // Placeholder: RPC que soma amount onde status = COMPLETED
+            client.postgrest.rpc("get_total_revenue", mapOf(
+                "start_date" to startDate,
+                "end_date" to endDate
+            )).decodeSingle<Double>()
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR RECEITA TOTAL: ${e.message}")
+            0.0
+        }
+    }
+
+    override suspend fun getAveragePaymentAmount(): Double {
+        return try {
+            // Placeholder: RPC para média de amount
+            client.postgrest.rpc("get_average_payment_amount").decodeSingle<Double>()
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR MÉDIA DE PAGAMENTOS: ${e.message}")
+            0.0
+        }
+    }
+
+    override suspend fun getPaymentMethodDistribution(): Map<String, Int> {
+        return try {
+            // Placeholder: RPC com group by payment_method
+            mapOf("CREDIT_CARD" to 0, "MOBILE_MONEY" to 0, "BANK_TRANSFER" to 0)
+        } catch (e: Exception) {
+            println("ERRO AO OBTER DISTRIBUIÇÃO DE MÉTODOS DE PAGAMENTO: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+
+class SchoolDataSourceImpl : SchoolDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_school"
+
+    override suspend fun createSchool(school: SchoolModel): SchoolModel {
+        return try {
+
+
+            client.postgrest[schema, table]
+                .insert(school) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SchoolModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR SCHOOL: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSchoolById(id: Long): SchoolModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<SchoolModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SCHOOL POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSchoolByCode(code: String): SchoolModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("code", code) }
+                }
+                .decodeList<SchoolModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SCHOOL POR CODE $code: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllSchools(
+        active: Boolean?,
+        schoolTypeId: Long?,
+        communeId: Long?,
+        page: Int,
+        pageSize: Int
+    ): List<SchoolModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        active?.let { eq("status", if (it) "ACTIVE" else "INACTIVE") }
+                        schoolTypeId?.let { eq("school_type_id", it) }
+                        communeId?.let { eq("commune_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("name", Order.ASCENDING)
+                }
+                .decodeList<SchoolModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODAS AS SCHOOLS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSchoolsByCommune(communeId: Long, page: Int, pageSize: Int): List<SchoolModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("commune_id", communeId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("name", Order.ASCENDING)
+                }
+                .decodeList<SchoolModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SCHOOLS POR COMMUNE $communeId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSchoolsByType(schoolTypeId: Long, page: Int, pageSize: Int): List<SchoolModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("school_type_id", schoolTypeId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("name", Order.ASCENDING)
+                }
+                .decodeList<SchoolModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SCHOOLS POR TYPE $schoolTypeId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchSchools(
+        query: String,
+        communeId: Long?,
+        page: Int,
+        pageSize: Int
+    ): List<SchoolModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        or {
+                            ilike("name", "%$query%")
+                            ilike("code", "%$query%")
+                        }
+                        communeId?.let { eq("commune_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("name", Order.ASCENDING)
+                }
+                .decodeList<SchoolModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR SCHOOLS '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTopSchoolsByStudents(limit: Int): List<SchoolModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    order("student_count", Order.DESCENDING)
+                    limit(limit.toLong())
+                }
+                .decodeList<SchoolModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TOP SCHOOLS POR ALUNOS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateSchool(school: SchoolModel): SchoolModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(school) {
+                    filter { eq("id", school.id) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SchoolModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR SCHOOL ${school.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateSchoolStatus(id: Long, status: UserStatus): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to status.name)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS DA SCHOOL $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateSchoolStatistics(id: Long): Boolean {
+        return try {
+            // Placeholder - atualiza contagens (students, teachers, etc.)
+            client.postgrest[schema, table]
+                .update(mapOf("updated_at" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR ESTATÍSTICAS DA SCHOOL $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateSubscription(id: Long, plan: String?, expiresAt: String?): Boolean {
+        return try {
+            val updates = buildMap {
+                plan?.let { put("subscription_plan", it) }
+                expiresAt?.let { put("subscription_expires_at", it) }
+            }
+
+            if (updates.isEmpty()) return true
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR SUBSCRIPTION DA SCHOOL $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteSchool(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR SCHOOL $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countSchoolsByCommune(communeId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("commune_id", communeId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SCHOOLS POR COMMUNE $communeId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countSchoolsByType(): Map<Long, Int> {
+        return try {
+            // Placeholder: RPC com group by school_type_id
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SCHOOLS POR TYPE: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getTotalSchoolsCount(): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)"))
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TOTAL DE SCHOOLS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSchoolPerformanceMetrics(schoolId: Long): Map<String, Any> {
+        return try {
+            // Placeholder: alunos, professores, taxa de aprovação, etc.
+            mapOf(
+                "total_students" to 0,
+                "total_teachers" to 0,
+                "average_performance" to 0.0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER MÉTRICAS DA SCHOOL $schoolId: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+
+class SchoolDirectorDataSourceImpl : SchoolDirectorDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_school_director"
+
+    override suspend fun createDirector(director: SchoolDirectorModel): SchoolDirectorModel {
+        return try {
+
+
+            client.postgrest[schema, table]
+                .insert(director) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SchoolDirectorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR SCHOOL DIRECTOR: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getDirectorById(id: Long): SchoolDirectorModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<SchoolDirectorModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR DIRECTOR POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getDirectorByEmail(email: String): SchoolDirectorModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("email", email) }
+                }
+                .decodeList<SchoolDirectorModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR DIRECTOR POR EMAIL $email: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getDirectorBySchool(schoolId: Long): SchoolDirectorModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("school_id", schoolId) }
+                }
+                .decodeList<SchoolDirectorModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR DIRECTOR POR SCHOOL $schoolId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllDirectors(active: Boolean?, page: Int, pageSize: Int): List<SchoolDirectorModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        active?.let { eq("status", if (it) "ACTIVE" else "INACTIVE") }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<SchoolDirectorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODOS OS DIRECTORS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchDirectors(query: String, page: Int, pageSize: Int): List<SchoolDirectorModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        or {
+                            ilike("full_name", "%$query%")
+                            ilike("email", "%$query%")
+                            ilike("phone", "%$query%")
+                        }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<SchoolDirectorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR DIRECTORS '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getDirectorsWithExpiringLicense(days: Int): List<SchoolDirectorModel> {
+        return try {
+
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+            val sinceDate = today.minus(DatePeriod(days = days))
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { lte("license_expiration_date", sinceDate) }
+                    order("license_expiration_date", Order.ASCENDING)
+                }
+                .decodeList<SchoolDirectorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR DIRECTORS COM LICENÇA A EXPIRAR EM $days dias: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateDirector(director: SchoolDirectorModel): SchoolDirectorModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(director) {
+                    filter { eq("id", director.id) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SchoolDirectorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR DIRECTOR ${director.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateDirectorStatus(id: Long, status: UserStatus): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to status.name)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS DO DIRECTOR $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateLicenseStatus(id: Long, active: Boolean, expirationDate: String?): Boolean {
+        return try {
+            val updates = buildMap {
+                put("license_active", active)
+                expirationDate?.let { put("license_expiration", it) }
+            }
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS DA LICENÇA DO DIRECTOR $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateDirectorPermissions(
+        id: Long,
+        canManageTeachers: Boolean?,
+        canManageStudents: Boolean?,
+        canViewReports: Boolean?,
+        canApproveContent: Boolean?
+    ): Boolean {
+        return try {
+            val updates = buildMap {
+                canManageTeachers?.let { put("can_manage_teachers", it) }
+                canManageStudents?.let { put("can_manage_students", it) }
+                canViewReports?.let { put("can_view_reports", it) }
+                canApproveContent?.let { put("can_approve_content", it) }
+            }
+
+            if (updates.isEmpty()) return true
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR PERMISSÕES DO DIRECTOR $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun softDeleteDirector(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to "DELETED", "deleted_at" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO SOFT DELETE DIRECTOR $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteDirector(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR DIRECTOR $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countDirectorsBySchool(): Map<Long, Int> {
+        return try {
+            // Placeholder: RPC com group by school_id
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR DIRECTORS POR SCHOOL: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getTotalDirectorsCount(): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)"))
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TOTAL DE DIRECTORS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getDirectorLicenseStats(): Map<String, Any> {
+        return try {
+            // Placeholder: licenças ativas, expiradas, próximas a expirar
+            mapOf(
+                "active_licenses" to 0,
+                "expiring_soon" to 0,
+                "expired" to 0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER ESTATÍSTICAS DE LICENÇAS DOS DIRECTORS: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+
+class SchoolTypeDataSourceImpl : SchoolTypeDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_school_type"
+
+    override suspend fun createSchoolType(schoolType: SchoolTypeModel): SchoolTypeModel {
+        return try {
+            val data = buildJsonObject {
+                put("name", schoolType.name)
+                put("code", schoolType.code)
+                put("description", schoolType.description)
+                put("is_active", schoolType.isActive)
+            }
+
+            client.postgrest[schema, table]
+                .insert(data) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SchoolTypeModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR SCHOOL TYPE: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSchoolTypeById(id: Long): SchoolTypeModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<SchoolTypeModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SCHOOL TYPE POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSchoolTypeByCode(code: String): SchoolTypeModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("code", code) }
+                }
+                .decodeList<SchoolTypeModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SCHOOL TYPE POR CODE $code: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllSchoolTypes(active: Boolean?, page: Int, pageSize: Int): List<SchoolTypeModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { active?.let { eq("is_active", it) } }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("name", Order.ASCENDING)
+                }
+                .decodeList<SchoolTypeModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODOS OS SCHOOL TYPES: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchSchoolTypes(query: String, page: Int, pageSize: Int): List<SchoolTypeModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        or {
+                            ilike("name", "%$query%")
+                            ilike("code", "%$query%")
+                        }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("name", Order.ASCENDING)
+                }
+                .decodeList<SchoolTypeModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR SCHOOL TYPES '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateSchoolType(schoolType: SchoolTypeModel): SchoolTypeModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(schoolType) {
+                    filter { eq("id", schoolType.id) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SchoolTypeModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR SCHOOL TYPE ${schoolType.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateSchoolTypeActiveStatus(id: Long, isActive: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("is_active" to isActive)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS ATIVO DO SCHOOL TYPE $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteSchoolType(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR SCHOOL TYPE $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countSchoolsByType(): Map<Long, Int> {
+        return try {
+            // Placeholder: RPC com group by school_type_id
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SCHOOLS POR TYPE: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getTotalSchoolTypesCount(): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)"))
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TOTAL DE SCHOOL TYPES: ${e.message}")
+            throw e
+        }
+    }
+}
+
+class StateManagerDataSourceImpl : StateManagerDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_state_manager"
+
+    override suspend fun createStateManager(manager: StateManagerModel): StateManagerModel {
+        return try {
+
+            client.postgrest[schema, table]
+                .insert(manager) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<StateManagerModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR STATE MANAGER: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStateManagerById(id: Long): StateManagerModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<StateManagerModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STATE MANAGER POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStateManagerByEmail(email: String): StateManagerModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("email", email) }
+                }
+                .decodeList<StateManagerModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STATE MANAGER POR EMAIL $email: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllStateManagers(
+        active: Boolean?,
+        accessLevel: ManagerAccessLevel?,
+        page: Int,
+        pageSize: Int
+    ): List<StateManagerModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        active?.let { eq("status", if (it) "ACTIVE" else "INACTIVE") }
+                        accessLevel?.let { eq("access_level", it.name) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<StateManagerModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODOS OS STATE MANAGERS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStateManagersByProvince(provinceId: Long, page: Int, pageSize: Int): List<StateManagerModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("province_id", provinceId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<StateManagerModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STATE MANAGERS POR PROVINCE $provinceId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStateManagersByAccessLevel(level: ManagerAccessLevel, page: Int, pageSize: Int): List<StateManagerModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("access_level", level.name) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<StateManagerModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STATE MANAGERS POR ACCESS LEVEL ${level.name}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchStateManagers(query: String, page: Int, pageSize: Int): List<StateManagerModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        or {
+                            ilike("full_name", "%$query%")
+                            ilike("email", "%$query%")
+                            ilike("phone", "%$query%")
+                        }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<StateManagerModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR STATE MANAGERS '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateStateManager(manager: StateManagerModel): StateManagerModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(manager) {
+                    filter { eq("id", manager.id) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<StateManagerModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATE MANAGER ${manager.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateStateManagerStatus(id: Long, status: UserStatus): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to status.name)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS DO STATE MANAGER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateStateManagerAccessLevel(id: Long, accessLevel: ManagerAccessLevel): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("access_level" to accessLevel.name)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR ACCESS LEVEL DO STATE MANAGER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateStateManagerPermissions(
+        id: Long,
+        canExportData: Boolean?,
+        canViewNationalReports: Boolean?,
+        canApproveContent: Boolean?
+    ): Boolean {
+        return try {
+            val updates = buildMap {
+                canExportData?.let { put("can_export_data", it) }
+                canViewNationalReports?.let { put("can_view_national_reports", it) }
+                canApproveContent?.let { put("can_approve_content", it) }
+            }
+
+            if (updates.isEmpty()) return true
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR PERMISSÕES DO STATE MANAGER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun incrementReportsGenerated(id: Long): Boolean {
+        return try {
+            client.postgrest.rpc(
+                function = "increment_reports_generated",
+                parameters = mapOf("manager_id" to id)
+            ).decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO INCREMENTAR REPORTS GENERATED DO STATE MANAGER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun softDeleteStateManager(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to "DELETED", "deleted_at" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO SOFT DELETE STATE MANAGER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteStateManager(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR STATE MANAGER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countStateManagersByAccessLevel(): Map<ManagerAccessLevel, Int> {
+        return try {
+            // Placeholder: RPC com group by access_level
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR STATE MANAGERS POR ACCESS LEVEL: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun countStateManagersByProvince(provinceId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("province_id", provinceId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR STATE MANAGERS POR PROVINCE $provinceId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTotalStateManagersCount(): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)"))
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TOTAL DE STATE MANAGERS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getManagerActivityStats(managerId: Long): Map<String, Any> {
+        return try {
+            // Placeholder: relatórios gerados, ações, etc.
+            mapOf(
+                "reports_generated" to 0,
+                "last_activity" to ""
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER ESTATÍSTICAS DO STATE MANAGER $managerId: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+
+class StudentDataSourceImpl : StudentDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_student"
+
+    override suspend fun createStudent(student: StudentModel): StudentModel {
+        return try {
+            val data = buildJsonObject {
+                put("full_name", student.fullName)
+                put("student_number", student.studentNumber)
+                put("email", student.email)
+                put("phone", student.phone)
+                put("birth_date", student.birthDate)
+                put("gender", student.gender.name)
+                put("school_id", student.schoolId)
+                put("classe_id", student.classeId)
+                put("grade_id", student.gradeId)
+                put("guardian_id", student.guardianId)
+                put("account_type", student.accountType.name)
+                put("status", student.status.name)
+                put("points", 0)
+                put("level", 1)
+                put("current_streak", 0)
+                put("longest_streak", 0)
+                put("last_login", null)
+                // Adiciona outros campos obrigatórios se existirem
+            }
+
+            client.postgrest[schema, table]
+                .insert(data) {
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_school!inner(*),
+                            tb_classe!inner(*),
+                            tb_grade!inner(*),
+                            tb_guardian!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<StudentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR STUDENT: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStudentById(id: Long): StudentModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<StudentModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STUDENT POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStudentByNumber(studentNumber: String): StudentModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("student_number", studentNumber) }
+                }
+                .decodeList<StudentModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STUDENT POR NÚMERO $studentNumber: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStudentByEmail(email: String): StudentModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("email", email) }
+                }
+                .decodeList<StudentModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STUDENT POR EMAIL $email: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllStudents(
+        active: Boolean?,
+        accountType: StudentAccountType?,
+        page: Int,
+        pageSize: Int
+    ): List<StudentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        active?.let { eq("status", if (it) "ACTIVE" else "INACTIVE") }
+                        accountType?.let { eq("account_type", it.name) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<StudentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODOS OS STUDENTS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStudentsBySchool(
+        schoolId: Long,
+        active: Boolean?,
+        page: Int,
+        pageSize: Int
+    ): List<StudentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("school_id", schoolId)
+                        active?.let { eq("status", if (it) "ACTIVE" else "INACTIVE") }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<StudentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STUDENTS POR SCHOOL $schoolId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStudentsByClasse(
+        classeId: Long,
+        active: Boolean?,
+        page: Int,
+        pageSize: Int
+    ): List<StudentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("classe_id", classeId)
+                        active?.let { eq("status", if (it) "ACTIVE" else "INACTIVE") }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<StudentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STUDENTS POR CLASSE $classeId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStudentsByGrade(gradeId: Long, page: Int, pageSize: Int): List<StudentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("grade_id", gradeId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<StudentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STUDENTS POR GRADE $gradeId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getStudentsByGuardian(guardianId: Long, page: Int, pageSize: Int): List<StudentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("guardian_id", guardianId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<StudentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STUDENTS POR GUARDIAN $guardianId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchStudents(
+        query: String,
+        schoolId: Long?,
+        page: Int,
+        pageSize: Int
+    ): List<StudentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        or {
+                            ilike("full_name", "%$query%")
+                            ilike("student_number", "%$query%")
+                            ilike("email", "%$query%")
+                        }
+                        schoolId?.let { eq("school_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<StudentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR STUDENTS '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTopStudentsByPoints(limit: Int): List<StudentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    order("points", Order.DESCENDING)
+                    limit(limit.toLong())
+                }
+                .decodeList<StudentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TOP STUDENTS POR PONTOS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getActiveStudentsWithStreak(minStreak: Int): List<StudentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*),
+                        tb_classe!inner(*),
+                        tb_grade!inner(*),
+                        tb_guardian!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("status", "ACTIVE")
+                        gte("current_streak", minStreak)
+                    }
+                    order("current_streak", Order.DESCENDING)
+                }
+                .decodeList<StudentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR STUDENTS ATIVOS COM STREAK >= $minStreak: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateStudent(student: StudentModel): StudentModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(student) {
+                    filter { eq("id", student.id) }
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_school!inner(*),
+                            tb_classe!inner(*),
+                            tb_grade!inner(*),
+                            tb_guardian!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<StudentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STUDENT ${student.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateStudentStatus(id: Long, status: UserStatus): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to status.name)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS DO STUDENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateStudentAccountType(id: Long, accountType: StudentAccountType): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("account_type" to accountType.name)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR ACCOUNT TYPE DO STUDENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateStudentPoints(id: Long, points: Int): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("points" to points)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR PONTOS DO STUDENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateStudentLevel(id: Long, level: Int): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("level" to level)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR LEVEL DO STUDENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateStudentStreak(id: Long, streakDays: Int, currentStreak: Int, longestStreak: Int): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(
+                    mapOf(
+                        "streak_days" to streakDays,
+                        "current_streak" to currentStreak,
+                        "longest_streak" to longestStreak
+                    )
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STREAK DO STUDENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateStudentStatistics(id: Long): Boolean {
+        return try {
+            // Placeholder: atualiza médias, contagens, etc. (pode usar RPC)
+            client.postgrest[schema, table]
+                .update(mapOf("updated_at" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR ESTATÍSTICAS DO STUDENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateLastLogin(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("last_login" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR LAST LOGIN DO STUDENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun assignGuardian(studentId: Long, guardianId: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("guardian_id" to guardianId)) {
+                    filter { eq("id", studentId) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ASSOCIAR GUARDIAN $guardianId AO STUDENT $studentId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun assignToClasse(studentId: Long, classeId: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("classe_id" to classeId)) {
+                    filter { eq("id", studentId) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ASSOCIAR CLASSE $classeId AO STUDENT $studentId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun softDeleteStudent(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to "DELETED", "deleted_at" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO SOFT DELETE STUDENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteStudent(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR STUDENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countStudentsBySchool(schoolId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("school_id", schoolId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR STUDENTS POR SCHOOL $schoolId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countStudentsByGrade(gradeId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("grade_id", gradeId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR STUDENTS POR GRADE $gradeId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countStudentsByClasse(classeId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("classe_id", classeId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR STUDENTS POR CLASSE $classeId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countStudentsByAccountType(): Map<StudentAccountType, Int> {
+        return try {
+            // Placeholder: ideal com RPC ou view com group by account_type
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR STUDENTS POR ACCOUNT TYPE: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getTotalStudentsCount(schoolId: Long?): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    schoolId?.let { filter { eq("school_id", it) } }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TOTAL DE STUDENTS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAverageStudentScore(schoolId: Long?): Double {
+        return try {
+            // Placeholder: RPC ou subquery para média de notas (exams/results)
+            client.postgrest.rpc("get_average_student_score", mapOf("school_id" to schoolId))
+                .decodeSingle<Double>()
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR MÉDIA DE NOTAS DOS STUDENTS: ${e.message}")
+            0.0
+        }
+    }
+
+    override suspend fun getStudentProgressStatistics(studentId: Long): Map<String, Any> {
+        return try {
+            // Placeholder: aulas completas, exercícios feitos, taxa de sucesso, etc.
+            mapOf(
+                "completed_lessons" to 0,
+                "success_rate_exercises" to 0.0,
+                "total_points" to 0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER ESTATÍSTICAS DE PROGRESSO DO STUDENT $studentId: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+class StudentAchievementDataSourceImpl : StudentAchievementDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_student_achievement"
+
+    override suspend fun createAchievement(achievement: StudentAchievementModel): StudentAchievementModel {
+        return try {
+
+            client.postgrest[schema, table]
+                .insert(achievement) {
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_student!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<StudentAchievementModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR ACHIEVEMENT: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAchievementById(id: Long): StudentAchievementModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_student!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<StudentAchievementModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ACHIEVEMENT POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAchievementsByStudent(studentId: Long, page: Int, pageSize: Int): List<StudentAchievementModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_student!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("student_id", studentId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("achieved_at", Order.DESCENDING)
+                }
+                .decodeList<StudentAchievementModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ACHIEVEMENTS POR STUDENT $studentId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAchievementsByType(type: String, studentId: Long?, page: Int, pageSize: Int): List<StudentAchievementModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_student!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("type", type)
+                        studentId?.let { eq("student_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("achieved_at", Order.DESCENDING)
+                }
+                .decodeList<StudentAchievementModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ACHIEVEMENTS POR TYPE $type: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getRecentAchievements(studentId: Long, limit: Int): List<StudentAchievementModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_student!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("student_id", studentId) }
+                    limit(limit.toLong())
+                    order("achieved_at", Order.DESCENDING)
+                }
+                .decodeList<StudentAchievementModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ACHIEVEMENTS RECENTES DO STUDENT $studentId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAchievementsWithBadges(studentId: Long, page: Int, pageSize: Int): List<StudentAchievementModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_student!inner(*),
+                        tb_badge!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("student_id", studentId)
+                       // isNotNull("badge_id")
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("achieved_at", Order.DESCENDING)
+                }
+                .decodeList<StudentAchievementModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ACHIEVEMENTS COM BADGES DO STUDENT $studentId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchAchievements(query: String, studentId: Long?, page: Int, pageSize: Int): List<StudentAchievementModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_student!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        or {
+                            ilike("title", "%$query%")
+                            ilike("description", "%$query%")
+                            ilike("type", "%$query%")
+                        }
+                        studentId?.let { eq("student_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("achieved_at", Order.DESCENDING)
+                }
+                .decodeList<StudentAchievementModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR ACHIEVEMENTS '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateAchievement(achievement: StudentAchievementModel): StudentAchievementModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(achievement) {
+                    filter { eq("id", achievement.id) }
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_student!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<StudentAchievementModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR ACHIEVEMENT ${achievement.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun deleteAchievement(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR ACHIEVEMENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countAchievementsByStudent(studentId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("student_id", studentId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR ACHIEVEMENTS POR STUDENT $studentId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countAchievementsByType(studentId: Long): Map<String, Int> {
+        return try {
+            // Placeholder - ideal com RPC ou view com group by type
+            mapOf("badge" to 0, "streak" to 0, "level_up" to 0)
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR ACHIEVEMENTS POR TYPE DO STUDENT $studentId: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getTotalPointsEarned(studentId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("sum(points_earned)")) {
+                    filter { eq("student_id", studentId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("sum")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR TOTAL DE PONTOS DO STUDENT $studentId: ${e.message}")
+            0
+        }
+    }
+
+    override suspend fun getAchievementFrequency(studentId: Long, days: Int): Map<String, Int> {
+        return try {
+            //val startDate = Clock.System.now().minus(DatePeriod(days = days)).toLocalDateTime(TimeZone.currentSystemDefault()).toString()
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            // Placeholder - ideal com RPC que agrupa por data
+            mapOf("daily" to 0, "weekly" to 0)
+        } catch (e: Exception) {
+            println("ERRO AO OBTER FREQUÊNCIA DE ACHIEVEMENTS DO STUDENT $studentId: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+class SubjectDataSourceImpl : SubjectDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_subject"
+
+    override suspend fun createSubject(subject: SubjectModel): SubjectModel {
+        return try {
+
+
+            client.postgrest[schema, table]
+                .insert(subject) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR SUBJECT: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSubjectById(id: Long): SubjectModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<SubjectModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBJECT POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSubjectByCode(code: String): SubjectModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("code", code) }
+                }
+                .decodeList<SubjectModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBJECT POR CODE $code: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllSubjects(
+        active: Boolean?,
+        isCore: Boolean?,
+        page: Int,
+        pageSize: Int
+    ): List<SubjectModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        active?.let { eq("is_active", it) }
+                        isCore?.let { eq("is_core", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("name", Order.ASCENDING)
+                }
+                .decodeList<SubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODOS OS SUBJECTS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSubjectsByGradeLevel(level: GradeLevel, page: Int, pageSize: Int): List<SubjectModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("grade_level", level.name) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("name", Order.ASCENDING)
+                }
+                .decodeList<SubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBJECTS POR GRADE LEVEL ${level.name}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getCoreSubjects(page: Int, pageSize: Int): List<SubjectModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("is_core", true) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("name", Order.ASCENDING)
+                }
+                .decodeList<SubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR CORE SUBJECTS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchSubjects(query: String, page: Int, pageSize: Int): List<SubjectModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        or {
+                            ilike("name", "%$query%")
+                            ilike("code", "%$query%")
+                            ilike("description", "%$query%")
+                        }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("name", Order.ASCENDING)
+                }
+                .decodeList<SubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR SUBJECTS '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateSubject(subject: SubjectModel): SubjectModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(subject) {
+                    filter { eq("id", subject.id) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR SUBJECT ${subject.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateSubjectActiveStatus(id: Long, isActive: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("is_active" to isActive)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS ATIVO DO SUBJECT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateSubjectStatistics(id: Long): Boolean {
+        return try {
+            // Placeholder - atualiza contagens, popularidade, etc.
+            client.postgrest[schema, table]
+                .update(mapOf("updated_at" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR ESTATÍSTICAS DO SUBJECT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteSubject(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR SUBJECT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countSubjectsByGradeLevel(): Map<GradeLevel, Int> {
+        return try {
+            // Placeholder - ideal com RPC group by grade_level
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SUBJECTS POR GRADE LEVEL: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getTotalSubjectsCount(): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)"))
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TOTAL DE SUBJECTS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getMostPopularSubjects(limit: Int): List<SubjectModel> {
+        return try {
+            // Placeholder - order by popularity (ex: uso em lessons)
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    order("usage_count", Order.DESCENDING)
+                    limit(limit.toLong())
+                }
+                .decodeList<SubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBJECTS MAIS POPULARES: ${e.message}")
+            throw e
+        }
+    }
+}
+class SubscriptionDataSourceImpl : SubscriptionDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_subscription"
+
+    override suspend fun createSubscription(subscription: SubscriptionModel): SubscriptionModel {
+        return try {
+
+
+            client.postgrest[schema, table]
+                .insert(subscription) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SubscriptionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR SUBSCRIPTION: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSubscriptionById(id: Long): SubscriptionModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<SubscriptionModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBSCRIPTION POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSubscriptionByUser(userId: Long, userType: String, active: Boolean?): SubscriptionModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("user_id", userId)
+                        eq("user_type", userType)
+                        active?.let { eq("status", if (it) "ACTIVE" else "EXPIRED") }
+                    }
+                }
+                .decodeList<SubscriptionModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBSCRIPTION ATIVA POR USER $userId ($userType): ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSubscriptionsByUser(userId: Long, userType: String, page: Int, pageSize: Int): List<SubscriptionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("user_id", userId)
+                        eq("user_type", userType)
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("start_date", Order.DESCENDING)
+                }
+                .decodeList<SubscriptionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBSCRIPTIONS POR USER $userId ($userType): ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSubscriptionsByPlan(planName: String, page: Int, pageSize: Int): List<SubscriptionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("plan_name", planName) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("start_date", Order.DESCENDING)
+                }
+                .decodeList<SubscriptionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBSCRIPTIONS POR PLAN $planName: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSubscriptionsByStatus(status: String, page: Int, pageSize: Int): List<SubscriptionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", status) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("start_date", Order.DESCENDING)
+                }
+                .decodeList<SubscriptionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBSCRIPTIONS POR STATUS $status: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getActiveSubscriptions(page: Int, pageSize: Int): List<SubscriptionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", "ACTIVE") }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("end_date", Order.ASCENDING)
+                }
+                .decodeList<SubscriptionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBSCRIPTIONS ATIVAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getExpiringSubscriptions(days: Int, page: Int, pageSize: Int): List<SubscriptionModel> {
+        return try {
+
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("status", "ACTIVE")
+                        lte("end_date", today)
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("end_date", Order.ASCENDING)
+                }
+                .decodeList<SubscriptionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBSCRIPTIONS A EXPIRAR EM $days dias: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getCanceledSubscriptions(page: Int, pageSize: Int): List<SubscriptionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", "CANCELED") }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("start_date", Order.DESCENDING)
+                }
+                .decodeList<SubscriptionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBSCRIPTIONS CANCELADAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateSubscription(subscription: SubscriptionModel): SubscriptionModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(subscription) {
+                    filter { eq("id", subscription.id) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SubscriptionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR SUBSCRIPTION ${subscription.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun cancelSubscription(id: Long, reason: String?): Boolean {
+        return try {
+            val updates = buildMap {
+                put("status", "CANCELED")
+                reason?.let { put("cancel_reason", it) }
+                put("canceled_at", Clock.System.now().toString())
+            }
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO CANCELAR SUBSCRIPTION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun renewSubscription(id: Long, endDate: String): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(
+                    mapOf(
+                        "end_date" to endDate,
+                        "status" to "ACTIVE"
+                    )
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO RENOVAR SUBSCRIPTION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateAutoRenew(id: Long, autoRenew: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("auto_renew" to autoRenew)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR AUTO-RENEW DA SUBSCRIPTION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateSubscriptionStatus(id: Long, status: String): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to status)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS DA SUBSCRIPTION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteSubscription(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR SUBSCRIPTION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countSubscriptionsByPlan(): Map<String, Int> {
+        return try {
+            // Placeholder - RPC com group by plan_name
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SUBSCRIPTIONS POR PLAN: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun countSubscriptionsByStatus(): Map<String, Int> {
+        return try {
+            // Placeholder - RPC com group by status
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SUBSCRIPTIONS POR STATUS: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getTotalActiveSubscriptions(): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("status", "ACTIVE") }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TOTAL DE SUBSCRIPTIONS ATIVAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getMonthlyRecurringRevenue(): Double {
+        return try {
+            // Placeholder - RPC que soma valores de planos ativos mensais
+            client.postgrest.rpc("get_monthly_recurring_revenue").decodeSingle<Double>()
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR RECEITA RECORRENTE MENSAL: ${e.message}")
+            0.0
+        }
+    }
+
+    override suspend fun getChurnRate(startDate: String, endDate: String): Double {
+        return try {
+            // Placeholder - RPC que calcula (cancelados / total no período) * 100
+            client.postgrest.rpc("get_churn_rate", mapOf(
+                "start_date" to startDate,
+                "end_date" to endDate
+            )).decodeSingle<Double>()
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR CHURN RATE: ${e.message}")
+            0.0
+        }
+    }
+}
+
+class SystemAdministratorDataSourceImpl : SystemAdministratorDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_system_administrator"
+
+    override suspend fun createAdmin(admin: SystemAdministratorModel): SystemAdministratorModel {
+        return try {
+
+
+            client.postgrest[schema, table]
+                .insert(admin) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SystemAdministratorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR SYSTEM ADMINISTRATOR: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAdminById(id: Long): SystemAdministratorModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<SystemAdministratorModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ADMIN POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAdminByEmail(email: String): SystemAdministratorModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("email", email) }
+                }
+                .decodeList<SystemAdministratorModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ADMIN POR EMAIL $email: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllAdmins(
+        active: Boolean?,
+        permissionLevel: AdminPermissionLevel?,
+        page: Int,
+        pageSize: Int
+    ): List<SystemAdministratorModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        active?.let { eq("status", if (it) "ACTIVE" else "INACTIVE") }
+                        permissionLevel?.let { eq("permission_level", it.name) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<SystemAdministratorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODOS OS ADMINS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAdminsByPermissionLevel(level: AdminPermissionLevel, page: Int, pageSize: Int): List<SystemAdministratorModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("permission_level", level.name) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<SystemAdministratorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ADMINS POR PERMISSION LEVEL ${level.name}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchAdmins(query: String, page: Int, pageSize: Int): List<SystemAdministratorModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        or {
+                            ilike("full_name", "%$query%")
+                            ilike("email", "%$query%")
+                            ilike("phone", "%$query%")
+                        }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<SystemAdministratorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR ADMINS '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAdminsWithTwoFactorAuth(page: Int, pageSize: Int): List<SystemAdministratorModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("two_factor_enabled", true) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<SystemAdministratorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ADMINS COM 2FA: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateAdmin(admin: SystemAdministratorModel): SystemAdministratorModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(admin) {
+                    filter { eq("id", admin.id) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<SystemAdministratorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR ADMIN ${admin.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateAdminStatus(id: Long, status: UserStatus): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to status.name)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS DO ADMIN $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateAdminPermissionLevel(id: Long, permissionLevel: AdminPermissionLevel): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("permission_level" to permissionLevel.name)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR PERMISSION LEVEL DO ADMIN $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateAdminPermissions(
+        id: Long,
+        canManageUsers: Boolean?,
+        canManageContent: Boolean?,
+        canManagePayments: Boolean?
+    ): Boolean {
+        return try {
+            val updates = buildMap {
+                canManageUsers?.let { put("can_manage_users", it) }
+                canManageContent?.let { put("can_manage_content", it) }
+                canManagePayments?.let { put("can_manage_payments", it) }
+            }
+
+            if (updates.isEmpty()) return true
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR PERMISSÕES DO ADMIN $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateTwoFactorAuth(id: Long, enabled: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("two_factor_enabled" to enabled)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR 2FA DO ADMIN $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun incrementActionsPerformed(id: Long): Boolean {
+        return try {
+            client.postgrest.rpc("increment_admin_actions", mapOf("admin_id" to id))
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO INCREMENTAR ACTIONS DO ADMIN $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateLastLogin(id: Long, ipAddress: String?): Boolean {
+        return try {
+            val updates = buildMap {
+                put("last_login", Clock.System.now().toString())
+                ipAddress?.let { put("last_ip_address", it) }
+            }
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR LAST LOGIN DO ADMIN $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun resetFailedLoginAttempts(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("failed_login_attempts" to 0)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO RESETAR FAILED LOGIN ATTEMPTS DO ADMIN $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun incrementFailedLoginAttempts(id: Long): Boolean {
+        return try {
+            client.postgrest.rpc("increment_failed_login_attempts", mapOf("admin_id" to id))
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO INCREMENTAR FAILED LOGIN ATTEMPTS DO ADMIN $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun softDeleteAdmin(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to "DELETED", "deleted_at" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO SOFT DELETE ADMIN $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteAdmin(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR ADMIN $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countAdminsByPermissionLevel(): Map<AdminPermissionLevel, Int> {
+        return try {
+            // Placeholder - RPC com group by permission_level
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR ADMINS POR PERMISSION LEVEL: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getTotalAdminsCount(): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)"))
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TOTAL DE ADMINS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAdminActivityStats(days: Int): Map<String, Any> {
+        return try {
+            // Placeholder - ações, logins, etc. nos últimos days
+            mapOf(
+                "actions_performed" to 0,
+                "login_count" to 0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER ESTATÍSTICAS DE ADMIN: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getMostActiveAdmins(limit: Int): List<SystemAdministratorModel> {
+        return try {
+            // Placeholder - order by actions_performed desc
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    order("actions_performed", Order.DESCENDING)
+                    limit(limit.toLong())
+                }
+                .decodeList<SystemAdministratorModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ADMINS MAIS ATIVOS: ${e.message}")
+            throw e
+        }
+    }
+}
+
+class TeacherDataSourceImpl : TeacherDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_teacher"
+
+    override suspend fun createTeacher(teacher: TeacherModel): TeacherModel {
+        return try {
+
+
+            client.postgrest[schema, table]
+                .insert(teacher) {
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_school!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<TeacherModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR TEACHER: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeacherById(id: Long): TeacherModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<TeacherModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHER POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeacherByNumber(teacherNumber: String): TeacherModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("teacher_number", teacherNumber) }
+                }
+                .decodeList<TeacherModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHER POR NÚMERO $teacherNumber: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeacherByEmail(email: String): TeacherModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("email", email) }
+                }
+                .decodeList<TeacherModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHER POR EMAIL $email: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllTeachers(
+        active: Boolean?,
+        verified: Boolean?,
+        type: TeacherType?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        active?.let { eq("status", if (it) "ACTIVE" else "INACTIVE") }
+                        verified?.let { eq("verified", it) }
+                        type?.let { eq("type", it.name) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<TeacherModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODOS OS TEACHERS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeachersBySchool(schoolId: Long, active: Boolean?, page: Int, pageSize: Int): List<TeacherModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("school_id", schoolId)
+                        active?.let { eq("status", if (it) "ACTIVE" else "INACTIVE") }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<TeacherModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHERS POR SCHOOL $schoolId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeachersByType(type: TeacherType, page: Int, pageSize: Int): List<TeacherModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("type", type.name) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<TeacherModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHERS POR TYPE ${type.name}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getVerifiedTeachers(page: Int, pageSize: Int): List<TeacherModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("verified", true) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<TeacherModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHERS VERIFICADOS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getPendingApprovalTeachers(page: Int, pageSize: Int): List<TeacherModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("verified", false) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<TeacherModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHERS PENDENTES DE APROVAÇÃO: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getFeaturedTeachers(page: Int, pageSize: Int): List<TeacherModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("is_featured", true) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<TeacherModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHERS FEATURED: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchTeachers(
+        query: String,
+        schoolId: Long?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        or {
+                            ilike("full_name", "%$query%")
+                            ilike("email", "%$query%")
+                            ilike("phone", "%$query%")
+                        }
+                        schoolId?.let { eq("school_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("full_name", Order.ASCENDING)
+                }
+                .decodeList<TeacherModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR TEACHERS '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTopRatedTeachers(limit: Int): List<TeacherModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_school!inner(*)
+                    """.trimIndent())
+                ) {
+                    order("average_rating", Order.DESCENDING)
+                    limit(limit.toLong())
+                }
+                .decodeList<TeacherModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TOP RATED TEACHERS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateTeacher(teacher: TeacherModel): TeacherModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(teacher) {
+                    filter { eq("id", teacher.id) }
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_school!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<TeacherModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR TEACHER ${teacher.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateTeacherStatus(id: Long, status: UserStatus): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to status.name)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS DO TEACHER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun verifyTeacher(id: Long, verifiedBy: Long, verifiedAt: String): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(
+                    mapOf(
+                        "verified" to true,
+                        "verified_by" to verifiedBy,
+                        "verified_at" to verifiedAt
+                    )
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO VERIFICAR TEACHER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun rejectTeacher(id: Long, rejectedBy: Long, reason: String?): Boolean {
+        return try {
+            val updates = buildMap {
+                put("verified", false)
+                put("rejected_by", rejectedBy)
+                reason?.let { put("rejection_reason", it) }
+            }
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO REJEITAR TEACHER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateTeacherRating(id: Long, averageRating: Double, totalRatings: Int): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(
+                    mapOf(
+                        "average_rating" to averageRating,
+                        "total_ratings" to totalRatings
+                    )
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR RATING DO TEACHER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateTeacherStatistics(id: Long): Boolean {
+        return try {
+            // Placeholder - recalcula médias, etc.
+            client.postgrest[schema, table]
+                .update(mapOf("updated_at" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR ESTATÍSTICAS DO TEACHER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateMarketplaceStatus(id: Long, enabled: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("marketplace_enabled" to enabled)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR MARKETPLACE STATUS DO TEACHER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateMarketplaceBalance(id: Long, balance: Double): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("marketplace_balance" to balance)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR MARKETPLACE BALANCE DO TEACHER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun markAsFeatured(id: Long, featured: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("is_featured" to featured)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO MARCAR TEACHER $id COMO FEATURED: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun assignToSchool(teacherId: Long, schoolId: Long?): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("school_id" to schoolId)) {
+                    filter { eq("id", teacherId) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ASSOCIAR TEACHER $teacherId À SCHOOL $schoolId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun softDeleteTeacher(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to "DELETED", "deleted_at" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO SOFT DELETE TEACHER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteTeacher(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR TEACHER $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countTeachersBySchool(schoolId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("school_id", schoolId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TEACHERS POR SCHOOL $schoolId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countTeachersByType(): Map<TeacherType, Int> {
+        return try {
+            // Placeholder - RPC com group by type
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TEACHERS POR TYPE: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun countVerifiedTeachers(): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("verified", true) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TEACHERS VERIFICADOS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTotalTeachersCount(schoolId: Long?): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    schoolId?.let { filter { eq("school_id", it) } }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TOTAL DE TEACHERS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAverageTeacherRating(schoolId: Long?): Double {
+        return try {
+            // Placeholder - RPC para média de average_rating
+            client.postgrest.rpc("get_average_teacher_rating", mapOf("school_id" to schoolId))
+                .decodeSingle<Double>()
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR MÉDIA DE RATING DOS TEACHERS: ${e.message}")
+            0.0
+        }
+    }
+
+    override suspend fun getTeacherPerformanceStatistics(teacherId: Long): Map<String, Any> {
+        return try {
+            // Placeholder - aulas dadas, rating médio, alunos impactados, etc.
+            mapOf(
+                "lessons_given" to 0,
+                "average_rating" to 0.0,
+                "student_impact" to 0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER ESTATÍSTICAS DE PERFORMANCE DO TEACHER $teacherId: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+
+class TeacherAssignmentDataSourceImpl : TeacherAssignmentDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_teacher_assignment"
+
+    override suspend fun createTeacherAssignment(assignment: TeacherAssignmentModel): TeacherAssignmentModel {
+        return try {
+
+
+            client.postgrest[schema, table]
+                .insert(assignment) {
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_teacher!inner(*),
+                            tb_classe!inner(*),
+                            tb_subject!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<TeacherAssignmentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR TEACHER ASSIGNMENT: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeacherAssignmentById(id: Long): TeacherAssignmentModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_classe!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<TeacherAssignmentModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHER ASSIGNMENT POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAssignmentsByTeacher(
+        teacherId: Long,
+        active: Boolean?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherAssignmentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_classe!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        active?.let { eq("is_active", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("school_year", Order.DESCENDING)
+                }
+                .decodeList<TeacherAssignmentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ASSIGNMENTS POR TEACHER $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAssignmentsByClasse(
+        classeId: Long,
+        active: Boolean?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherAssignmentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_classe!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("classe_id", classeId)
+                        active?.let { eq("is_active", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("school_year", Order.DESCENDING)
+                }
+                .decodeList<TeacherAssignmentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ASSIGNMENTS POR CLASSE $classeId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAssignmentsBySubject(
+        subjectId: Long,
+        active: Boolean?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherAssignmentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_classe!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("subject_id", subjectId)
+                        active?.let { eq("is_active", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("school_year", Order.DESCENDING)
+                }
+                .decodeList<TeacherAssignmentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ASSIGNMENTS POR SUBJECT $subjectId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getHomeroomTeachers(
+        classeId: Long?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherAssignmentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_classe!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("is_homeroom_teacher", true)
+                        classeId?.let { eq("classe_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("school_year", Order.DESCENDING)
+                }
+                .decodeList<TeacherAssignmentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR HOMEROOM TEACHERS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getActiveAssignmentsBySchoolYear(
+        schoolYear: String,
+        teacherId: Long?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherAssignmentModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_classe!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("school_year", schoolYear)
+                        eq("is_active", true)
+                        teacherId?.let { eq("teacher_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("classe_id", Order.ASCENDING)
+                }
+                .decodeList<TeacherAssignmentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ASSIGNMENTS ATIVOS NO ANO $schoolYear: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeacherWorkload(teacherId: Long, schoolYear: String): Map<String, Any> {
+        return try {
+            // Placeholder - horas totais, disciplinas, turmas, etc.
+            // Ideal: RPC que soma hours_per_week e agrupa por subject/classe
+            mapOf(
+                "total_hours" to 0,
+                "subjects_count" to 0,
+                "classes_count" to 0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER WORKLOAD DO TEACHER $teacherId NO ANO $schoolYear: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun updateTeacherAssignment(assignment: TeacherAssignmentModel): TeacherAssignmentModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(assignment) {
+                    filter { eq("id", assignment.id) }
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_teacher!inner(*),
+                            tb_classe!inner(*),
+                            tb_subject!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<TeacherAssignmentModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR TEACHER ASSIGNMENT ${assignment.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateAssignmentActiveStatus(id: Long, isActive: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("is_active" to isActive)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS ATIVO DO ASSIGNMENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateHomeroomStatus(id: Long, isHomeroomTeacher: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("is_homeroom_teacher" to isHomeroomTeacher)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR HOMEROOM STATUS DO ASSIGNMENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteTeacherAssignment(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR TEACHER ASSIGNMENT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countAssignmentsByTeacher(teacherId: Long, schoolYear: String?): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        schoolYear?.let { eq("school_year", it) }
+                    }
+
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR ASSIGNMENTS POR TEACHER $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countAssignmentsByClasse(classeId: Long, schoolYear: String?): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter {
+                        eq("classe_id", classeId)
+                        schoolYear?.let { eq("school_year", it) }
+                    }
+
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR ASSIGNMENTS POR CLASSE $classeId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTotalWeeklyHoursByTeacher(teacherId: Long, schoolYear: String): Int {
+        return try {
+            // Placeholder - soma hours_per_week
+            client.postgrest.rpc("get_total_weekly_hours_by_teacher", mapOf(
+                "teacher_id" to teacherId,
+                "school_year" to schoolYear
+            )).decodeSingle<Int>()
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR HORAS SEMANAIS DO TEACHER $teacherId NO ANO $schoolYear: ${e.message}")
+            0
+        }
+    }
+
+    override suspend fun getTeacherSubjectDistribution(teacherId: Long): Map<Long, Int> {
+        return try {
+            // Placeholder - contagem de assignments por subject_id
+            mapOf(1L to 0, 2L to 0) // subject_id -> count
+        } catch (e: Exception) {
+            println("ERRO AO OBTER DISTRIBUIÇÃO DE SUBJECTS DO TEACHER $teacherId: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+
+class TeacherCertificationDataSourceImpl : TeacherCertificationDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_teacher_certification"
+
+    override suspend fun createCertification(certification: TeacherCertificationModel): TeacherCertificationModel {
+        return try {
+
+
+            client.postgrest[schema, table]
+                .insert(certification) {
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_teacher!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<TeacherCertificationModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR CERTIFICATION: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getCertificationById(id: Long): TeacherCertificationModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<TeacherCertificationModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR CERTIFICATION POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getCertificationsByTeacher(
+        teacherId: Long,
+        active: Boolean?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherCertificationModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        active?.let { eq("status", if (it) "ACTIVE" else "EXPIRED") }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("issue_date", Order.DESCENDING)
+                }
+                .decodeList<TeacherCertificationModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR CERTIFICATIONS POR TEACHER $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getCertificationsByStatus(
+        status: VerificationStatus,
+        teacherId: Long?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherCertificationModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("status", status.name)
+                        teacherId?.let { eq("teacher_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("issue_date", Order.DESCENDING)
+                }
+                .decodeList<TeacherCertificationModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR CERTIFICATIONS POR STATUS ${status.name}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getVerifiedCertifications(
+        teacherId: Long?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherCertificationModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("verified", true)
+                        teacherId?.let { eq("teacher_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("verified_at", Order.DESCENDING)
+                }
+                .decodeList<TeacherCertificationModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR CERTIFICATIONS VERIFICADAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getExpiringCertifications(days: Int, page: Int, pageSize: Int): List<TeacherCertificationModel> {
+        return try {
+           // val threshold = Clock.System.now().plus(DatePeriod(days = days)).toLocalDateTime(TimeZone.currentSystemDefault()).toString()
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        gte("expiration_date", Clock.System.now().toString())
+                        lte("expiration_date", today)
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("expiration_date", Order.ASCENDING)
+                }
+                .decodeList<TeacherCertificationModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR CERTIFICATIONS A EXPIRAR EM $days dias: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun searchCertifications(
+        query: String,
+        teacherId: Long?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherCertificationModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        or {
+                            ilike("title", "%$query%")
+                            ilike("issuing_institution", "%$query%")
+                        }
+                        teacherId?.let { eq("teacher_id", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("issue_date", Order.DESCENDING)
+                }
+                .decodeList<TeacherCertificationModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PESQUISAR CERTIFICATIONS '$query': ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateCertification(certification: TeacherCertificationModel): TeacherCertificationModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(certification) {
+                    filter { eq("id", certification.id) }
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_teacher!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<TeacherCertificationModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR CERTIFICATION ${certification.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun verifyCertification(id: Long, verifiedBy: Long, verifiedAt: String): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(
+                    mapOf(
+                        "verified" to true,
+                        "verified_by" to verifiedBy,
+                        "verified_at" to verifiedAt,
+                        "status" to "VERIFIED"
+                    )
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO VERIFICAR CERTIFICATION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun rejectCertification(id: Long, rejectionReason: String?): Boolean {
+        return try {
+            val updates = buildMap {
+                put("verified", false)
+                put("status", "REJECTED")
+                rejectionReason?.let { put("rejection_reason", it) }
+            }
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO REJEITAR CERTIFICATION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateCertificationActiveStatus(id: Long, isActive: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("status" to if (isActive) "ACTIVE" else "INACTIVE")) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS ATIVO DA CERTIFICATION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteCertification(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR CERTIFICATION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countCertificationsByTeacher(teacherId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("teacher_id", teacherId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR CERTIFICATIONS POR TEACHER $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countCertificationsByStatus(teacherId: Long?): Map<VerificationStatus, Int> {
+        return try {
+            // Placeholder - RPC com group by status
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR CERTIFICATIONS POR STATUS: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getExpiredCertificationsCount(): Int {
+        return try {
+            val today = Clock.System.now().toString()
+
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { lt("expiration_date", today) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR CERTIFICATIONS EXPIRADAS: ${e.message}")
+            throw e
+        }
+    }
+}
+
+class TeacherSubjectDataSourceImpl : TeacherSubjectDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_teacher_subject"
+
+    override suspend fun createTeacherSubject(teacherSubject: TeacherSubjectModel): TeacherSubjectModel {
+        return try {
+
+            client.postgrest[schema, table]
+                .insert(teacherSubject) {
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_teacher!inner(*),
+                            tb_subject!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<TeacherSubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR TEACHER SUBJECT: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeacherSubjectById(id: Long): TeacherSubjectModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<TeacherSubjectModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHER SUBJECT POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeacherSubjectsByTeacher(
+        teacherId: Long,
+        primary: Boolean?,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherSubjectModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        primary?.let { eq("is_primary", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("is_primary", Order.DESCENDING)
+                }
+                .decodeList<TeacherSubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBJECTS POR TEACHER $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeacherSubjectsBySubject(subjectId: Long, page: Int, pageSize: Int): List<TeacherSubjectModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("subject_id", subjectId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("years_experience", Order.DESCENDING)
+                }
+                .decodeList<TeacherSubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHERS POR SUBJECT $subjectId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getPrimarySubjectsByTeacher(teacherId: Long, page: Int, pageSize: Int): List<TeacherSubjectModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        eq("is_primary", true)
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("years_experience", Order.DESCENDING)
+                }
+                .decodeList<TeacherSubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR PRIMARY SUBJECTS DO TEACHER $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeachersBySubject(subjectId: Long, page: Int, pageSize: Int): List<TeacherSubjectModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("subject_id", subjectId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("years_experience", Order.DESCENDING)
+                }
+                .decodeList<TeacherSubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TEACHERS POR SUBJECT $subjectId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSubjectsByTeacherWithExperience(
+        teacherId: Long,
+        minYears: Int,
+        page: Int,
+        pageSize: Int
+    ): List<TeacherSubjectModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        gte("years_experience", minYears)
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("years_experience", Order.DESCENDING)
+                }
+                .decodeList<TeacherSubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SUBJECTS COM EXPERIÊNCIA >= $minYears DO TEACHER $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateTeacherSubject(teacherSubject: TeacherSubjectModel): TeacherSubjectModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(teacherSubject) {
+                    filter { eq("id", teacherSubject.id) }
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_teacher!inner(*),
+                            tb_subject!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<TeacherSubjectModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR TEACHER SUBJECT ${teacherSubject.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updatePrimaryStatus(id: Long, isPrimary: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("is_primary" to isPrimary)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR PRIMARY STATUS DO TEACHER SUBJECT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateSubjectRating(id: Long, rating: Double): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("rating" to rating)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR RATING DO TEACHER SUBJECT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun incrementLessonsInSubject(id: Long): Boolean {
+        return try {
+            client.postgrest.rpc("increment_lessons_in_subject", mapOf("ts_id" to id))
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO INCREMENTAR LESSONS NO TEACHER SUBJECT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteTeacherSubject(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR TEACHER SUBJECT $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countSubjectsByTeacher(teacherId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("teacher_id", teacherId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SUBJECTS POR TEACHER $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countTeachersBySubject(subjectId: Long): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("subject_id", subjectId) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR TEACHERS POR SUBJECT $subjectId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAverageExperienceBySubject(subjectId: Long): Double {
+        return try {
+            client.postgrest.rpc("get_average_experience_by_subject", mapOf("subject_id" to subjectId))
+                .decodeSingle<Double>()
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR MÉDIA DE EXPERIÊNCIA POR SUBJECT $subjectId: ${e.message}")
+            0.0
+        }
+    }
+
+    override suspend fun getTeacherSubjectExpertise(teacherId: Long): Map<String, Any> {
+        return try {
+            // Placeholder - expertise por subject (anos, rating, lessons)
+            mapOf(
+                "total_subjects" to 0,
+                "primary_subjects" to 0,
+                "average_rating" to 0.0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER EXPERTISE DO TEACHER $teacherId: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+
+class TimetableDataSourceImpl : TimetableDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_timetable"
+
+    override suspend fun createTimetable(timetable: TimetableModel): TimetableModel {
+        return try {
+            val data = buildJsonObject {
+                put("classe_id", timetable.classeId)
+                put("teacher_id", timetable.teacherId)
+                put("subject_id", timetable.subjectId)
+                put("day_of_week", timetable.dayOfWeek)
+                put("start_time", timetable.startTime)
+                put("end_time", timetable.endTime)
+                put("room", timetable.room)
+                put("school_year", timetable.schoolYear)
+                put("is_active", timetable.isActive)
+            }
+
+            client.postgrest[schema, table]
+                .insert(data) {
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_classe!inner(*),
+                            tb_teacher!inner(*),
+                            tb_subject!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<TimetableModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR TIMETABLE: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun createBulkTimetable(timetables: List<TimetableModel>): List<TimetableModel> {
+        return try {
+            val dataList = timetables.map { tt ->
+                buildJsonObject {
+                    put("classe_id", tt.classeId)
+                    put("teacher_id", tt.teacherId)
+                    put("subject_id", tt.subjectId)
+                    put("day_of_week", tt.dayOfWeek)
+                    put("start_time", tt.startTime)
+                    put("end_time", tt.endTime)
+                    put("room", tt.room)
+                    put("school_year", tt.schoolYear)
+                    put("is_active", tt.isActive)
+                }
+            }
+
+            client.postgrest[schema, table]
+                .insert(dataList) {
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_classe!inner(*),
+                            tb_teacher!inner(*),
+                            tb_subject!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeList<TimetableModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR BULK TIMETABLE: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTimetableById(id: Long): TimetableModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_classe!inner(*),
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<TimetableModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TIMETABLE POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTimetableByClasse(
+        classeId: Long,
+        active: Boolean?,
+        schoolYear: String?,
+        page: Int,
+        pageSize: Int
+    ): List<TimetableModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_classe!inner(*),
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("classe_id", classeId)
+                        active?.let { eq("is_active", it) }
+                        schoolYear?.let { eq("school_year", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("day_of_week", Order.ASCENDING)
+                }
+                .decodeList<TimetableModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TIMETABLE POR CLASSE $classeId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTimetableByTeacher(
+        teacherId: Long,
+        active: Boolean?,
+        schoolYear: String?,
+        page: Int,
+        pageSize: Int
+    ): List<TimetableModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_classe!inner(*),
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        active?.let { eq("is_active", it) }
+                        schoolYear?.let { eq("school_year", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("day_of_week", Order.ASCENDING)
+                }
+                .decodeList<TimetableModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TIMETABLE POR TEACHER $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTimetableBySubject(
+        subjectId: Long,
+        active: Boolean?,
+        schoolYear: String?,
+        page: Int,
+        pageSize: Int
+    ): List<TimetableModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_classe!inner(*),
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("subject_id", subjectId)
+                        active?.let { eq("is_active", it) }
+                        schoolYear?.let { eq("school_year", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("day_of_week", Order.ASCENDING)
+                }
+                .decodeList<TimetableModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TIMETABLE POR SUBJECT $subjectId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getDailyTimetable(classeId: Long, dayOfWeek: Int, schoolYear: String): List<TimetableModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_classe!inner(*),
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("classe_id", classeId)
+                        eq("day_of_week", dayOfWeek)
+                        eq("school_year", schoolYear)
+                        eq("is_active", true)
+                    }
+                    order("start_time", Order.ASCENDING)
+                }
+                .decodeList<TimetableModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TIMETABLE DIÁRIO DA CLASSE $classeId NO DIA $dayOfWeek: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getWeeklyTimetable(classeId: Long, schoolYear: String): Map<Int, List<TimetableModel>> {
+        return try {
+            val entries = client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_classe!inner(*),
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("classe_id", classeId)
+                        eq("school_year", schoolYear)
+                        eq("is_active", true)
+                    }
+                    order("day_of_week", Order.ASCENDING)
+                    order("start_time", Order.ASCENDING)
+                }
+                .decodeList<TimetableModel>()
+
+            entries.groupBy { it.dayOfWeek }
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TIMETABLE SEMANAL DA CLASSE $classeId: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getTimetableConflicts(
+        teacherId: Long,
+        dayOfWeek: Int,
+        startTime: String,
+        endTime: String,
+        schoolYear: String
+    ): List<TimetableModel> {
+        return try {
+            // Placeholder - busca slots que se sobrepõem no horário
+            // Ideal: RPC com filtro de intervalo de tempo
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_classe!inner(*),
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        eq("day_of_week", dayOfWeek)
+                        eq("school_year", schoolYear)
+                        eq("is_active", true)
+                        // Sobreposição: (start < endTime AND end > startTime)
+                    }
+                }
+                .decodeList<TimetableModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR CONFLITOS DE TIMETABLE PARA TEACHER $teacherId: ${e.message}")
+            emptyList()
+        }
+    }
+
+    override suspend fun getRoomSchedule(
+        room: String,
+        dayOfWeek: Int?,
+        schoolYear: String?,
+        page: Int,
+        pageSize: Int
+    ): List<TimetableModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(
+                    columns = Columns.raw("""
+                        *,
+                        tb_classe!inner(*),
+                        tb_teacher!inner(*),
+                        tb_subject!inner(*)
+                    """.trimIndent())
+                ) {
+                    filter {
+                        eq("room", room)
+                        dayOfWeek?.let { eq("day_of_week", it) }
+                        schoolYear?.let { eq("school_year", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("start_time", Order.ASCENDING)
+                }
+                .decodeList<TimetableModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR AGENDA DA SALA $room: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateTimetable(timetable: TimetableModel): TimetableModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(timetable) {
+                    filter { eq("id", timetable.id) }
+                    select(
+                        columns = Columns.raw("""
+                            *,
+                            tb_classe!inner(*),
+                            tb_teacher!inner(*),
+                            tb_subject!inner(*)
+                        """.trimIndent())
+                    )
+                }
+                .decodeSingle<TimetableModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR TIMETABLE ${timetable.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateTimetableActiveStatus(id: Long, isActive: Boolean): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("is_active" to isActive)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR STATUS ATIVO DO TIMETABLE $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun updateTimetableSlot(
+        id: Long,
+        dayOfWeek: Int?,
+        startTime: String?,
+        endTime: String?
+    ): Boolean {
+        return try {
+            val updates = buildMap {
+                dayOfWeek?.let { put("day_of_week", it) }
+                startTime?.let { put("start_time", it) }
+                endTime?.let { put("end_time", it) }
+            }
+
+            if (updates.isEmpty()) return true
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR SLOT DO TIMETABLE $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteTimetable(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR TIMETABLE $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteTimetableByClasse(classeId: Long, schoolYear: String): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter {
+                        eq("classe_id", classeId)
+                        eq("school_year", schoolYear)
+                    }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR TIMETABLE DA CLASSE $classeId NO ANO $schoolYear: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun countTimetableSlotsByTeacher(teacherId: Long, schoolYear: String): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        eq("school_year", schoolYear)
+                    }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SLOTS POR TEACHER $teacherId NO ANO $schoolYear: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countTimetableSlotsByClasse(classeId: Long, schoolYear: String): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter {
+                        eq("classe_id", classeId)
+                        eq("school_year", schoolYear)
+                    }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SLOTS POR CLASSE $classeId NO ANO $schoolYear: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getTeacherWeeklySchedule(teacherId: Long, schoolYear: String): Map<Int, Int> {
+        return try {
+            // Placeholder - horas por dia da semana
+            mapOf(1 to 0, 2 to 0, 3 to 0, 4 to 0, 5 to 0)
+        } catch (e: Exception) {
+            println("ERRO AO OBTER AGENDA SEMANAL DO TEACHER $teacherId: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getClassWeeklyHours(classeId: Long, schoolYear: String): Int {
+        return try {
+            // Placeholder - soma total de horas na semana
+            client.postgrest.rpc("get_class_weekly_hours", mapOf(
+                "classe_id" to classeId,
+                "school_year" to schoolYear
+            )).decodeSingle<Int>()
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR HORAS SEMANAIS DA CLASSE $classeId: ${e.message}")
+            0
+        }
+    }
+}
+
+class UserActivityLogDataSourceImpl : UserActivityLogDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_user_activity_log"
+
+    override suspend fun createActivityLog(log: UserActivityLogModel): UserActivityLogModel {
+        return try {
+
+
+            client.postgrest[schema, table]
+                .insert(log) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<UserActivityLogModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR ACTIVITY LOG: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getActivityLogById(id: Long): UserActivityLogModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<UserActivityLogModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR ACTIVITY LOG POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getActivityLogsByUser(userId: Long, userType: String, page: Int, pageSize: Int): List<UserActivityLogModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("user_id", userId)
+                        eq("user_type", userType)
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<UserActivityLogModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LOGS POR USER $userId ($userType): ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getActivityLogsByActivityType(activityType: String, page: Int, pageSize: Int): List<UserActivityLogModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("activity_type", activityType) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<UserActivityLogModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LOGS POR ACTIVITY TYPE $activityType: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getRecentActivityLogs(limit: Int): List<UserActivityLogModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    limit(limit.toLong())
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<UserActivityLogModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LOGS RECENTES: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getActivityLogsByDateRange(
+        startDate: String,
+        endDate: String,
+        userId: Long?,
+        userType: String?,
+        page: Int,
+        pageSize: Int
+    ): List<UserActivityLogModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        gte("created_at", startDate)
+                        lte("created_at", endDate)
+                        userId?.let { eq("user_id", it) }
+                        userType?.let { eq("user_type", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<UserActivityLogModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LOGS POR DATA RANGE $startDate - $endDate: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getActivityLogsByIpAddress(ipAddress: String, page: Int, pageSize: Int): List<UserActivityLogModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("ip_address", ipAddress) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<UserActivityLogModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LOGS POR IP $ipAddress: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun deleteActivityLog(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR ACTIVITY LOG $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteOldActivityLogs(days: Int): Int {
+        return try {
+           // val threshold = Clock.System.now().minus(DatePeriod(days = days)).toString()
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            client.postgrest[schema, table]
+                .delete {
+                    filter { lt("created_at", today) }
+                }
+                .decodeSingle<Boolean>()
+            // Nota: Supabase delete não retorna count nativo, usa RPC se quiseres contar
+            0
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR ACTIVITY LOGS ANTIGOS: ${e.message}")
+            0
+        }
+    }
+
+    override suspend fun countActivityLogsByUser(userId: Long, userType: String, days: Int): Int {
+        return try {
+            //val threshold = Clock.System.now().minus(DatePeriod(days = days)).toString()
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter {
+                        eq("user_id", userId)
+                        eq("user_type", userType)
+                        gte("created_at", today)
+                    }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR LOGS POR USER $userId ($userType): ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countActivityLogsByActivityType(days: Int): Map<String, Int> {
+        return try {
+            // Placeholder - RPC com group by activity_type nos últimos days
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR LOGS POR ACTIVITY TYPE: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getMostActiveUsers(userType: String, days: Int, limit: Int): List<Map<String, Any>> {
+        return try {
+            // Placeholder - RPC que retorna top users por count de logs
+            emptyList()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR USERS MAIS ATIVOS: ${e.message}")
+            emptyList()
+        }
+    }
+
+    override suspend fun getActivityFrequency(userId: Long, userType: String, days: Int): Map<String, Int> {
+        return try {
+            // Placeholder - logs por dia/semana
+            mapOf("monday" to 0, "tuesday" to 0)
+        } catch (e: Exception) {
+            println("ERRO AO OBTER FREQUÊNCIA DE ATIVIDADE DO USER $userId: ${e.message}")
+            emptyMap()
+        }
+    }
+}
+
+class UserSessionDataSourceImpl : UserSessionDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "tb_user_session"
+
+    override suspend fun createSession(session: UserSessionModel): UserSessionModel {
+        return try {
+
+
+            client.postgrest[schema, table]
+                .insert(session) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<UserSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CADASTRAR USER SESSION: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSessionById(id: Long): UserSessionModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", id) }
+                }
+                .decodeList<UserSessionModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SESSION POR ID $id: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSessionByToken(token: String): UserSessionModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("token", token) }
+                }
+                .decodeList<UserSessionModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SESSION POR TOKEN: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSessionsByUser(userId: Long, userType: String, active: Boolean?, page: Int, pageSize: Int): List<UserSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("user_id", userId)
+                        eq("user_type", userType)
+                        active?.let { eq("is_active", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("last_activity", Order.DESCENDING)
+                }
+                .decodeList<UserSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SESSIONS POR USER $userId ($userType): ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getActiveSessions(userId: Long, userType: String): List<UserSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("user_id", userId)
+                        eq("user_type", userType)
+                        eq("is_active", true)
+                    }
+                    order("last_activity", Order.DESCENDING)
+                }
+                .decodeList<UserSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SESSIONS ATIVAS DO USER $userId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSessionsByDevice(deviceId: String, userId: Long?, userType: String?, page: Int, pageSize: Int): List<UserSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("device_id", deviceId)
+                        userId?.let { eq("user_id", it) }
+                        userType?.let { eq("user_type", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("last_activity", Order.DESCENDING)
+                }
+                .decodeList<UserSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SESSIONS POR DEVICE $deviceId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getSessionsByIpAddress(ipAddress: String, page: Int, pageSize: Int): List<UserSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("ip_address", ipAddress) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("last_activity", Order.DESCENDING)
+                }
+                .decodeList<UserSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SESSIONS POR IP $ipAddress: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getRecentSessions(userId: Long, userType: String, limit: Int): List<UserSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("user_id", userId)
+                        eq("user_type", userType)
+                    }
+                    limit(limit.toLong())
+                    order("last_activity", Order.DESCENDING)
+                }
+                .decodeList<UserSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR SESSIONS RECENTES DO USER $userId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateSession(session: UserSessionModel): UserSessionModel {
+        return try {
+            client.postgrest[schema, table]
+                .update(session) {
+                    filter { eq("id", session.id) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<UserSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR SESSION ${session.id}: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateLastActivity(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("last_activity" to Clock.System.now().toString())) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR LAST ACTIVITY DA SESSION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun logoutSession(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("is_active" to false)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO FAZER LOGOUT DA SESSION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun logoutAllSessions(userId: Long, userType: String): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("is_active" to false)) {
+                    filter {
+                        eq("user_id", userId)
+                        eq("user_type", userType)
+                        eq("is_active", true)
+                    }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO FAZER LOGOUT DE TODAS AS SESSIONS DO USER $userId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun expireSession(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .update(mapOf("is_active" to false)) {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO EXPIRAR SESSION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteSession(id: Long): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", id) }
+                }
+                .decodeSingle<Boolean>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR SESSION $id: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteExpiredSessions(): Int {
+        return try {
+            // Placeholder - deleta sessions expiradas (usa RPC ou filter)
+            client.postgrest.rpc("delete_expired_sessions").decodeSingle<Int>()
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR SESSIONS EXPIRADAS: ${e.message}")
+            0
+        }
+    }
+
+    override suspend fun countActiveSessions(userId: Long?, userType: String?): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter {
+                        eq("is_active", true)
+                        userId?.let { eq("user_id", it) }
+                        userType?.let { eq("user_type", it) }
+                    }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SESSIONS ATIVAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countSessionsByDeviceType(userId: Long, userType: String): Map<String, Int> {
+        return try {
+            // Placeholder - RPC com group by device_type (precisa extrair de device_info)
+            emptyMap()
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR SESSIONS POR DEVICE TYPE: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    override suspend fun getAverageSessionDuration(userId: Long, userType: String, days: Int): Double {
+        return try {
+            // Placeholder - RPC que calcula média de duração (last_activity - created_at)
+            0.0
+        } catch (e: Exception) {
+            println("ERRO AO CALCULAR DURAÇÃO MÉDIA DE SESSIONS: ${e.message}")
+            0.0
+        }
+    }
+
+    override suspend fun getSessionActivity(userId: Long, userType: String, days: Int): Map<String, Any> {
+        return try {
+            // Placeholder - logins, ações, etc. nos últimos days
+            mapOf(
+                "session_count" to 0,
+                "average_duration_minutes" to 0.0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER ATIVIDADE DE SESSIONS DO USER $userId: ${e.message}")
             emptyMap()
         }
     }
