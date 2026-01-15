@@ -1,6 +1,7 @@
 package com.tshikasi.tshikasi_auto_school.domain.model
 
 import android.os.Parcelable
+import androidx.compose.ui.graphics.Color
 import com.tshikasi.tshikasi_auto_school.domain.model.eaonde.CommuneModel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.EncodeDefault
@@ -184,7 +185,12 @@ enum class NotificationType {
     @SerialName("ATTENDANCE") ATTENDANCE,
     @SerialName("ANNOUNCEMENT") ANNOUNCEMENT,
     @SerialName("MESSAGE") MESSAGE,
-    @SerialName("REPORT") REPORT
+    @SerialName("REPORT") REPORT,
+    @SerialName("live_starting")LIVE_STARTING,      // 5 min antes
+    @SerialName("live_started") LIVE_STARTED,       // Live começou
+    @SerialName("live_ended") LIVE_ENDED,         // Live terminou
+    @SerialName("mentioned")MENTIONED,          // Mencionado no chat
+    @SerialName("question_answered")QUESTION_ANSWERED   // Pergunta respondida
 }
 
 @Serializable
@@ -2587,3 +2593,620 @@ data class UserSessionModel(
 ) : Parcelable
 
 
+
+// ==================== ENUMS SERIALIZÁVEIS ====================
+
+@Serializable
+enum class LiveStatus {
+    @SerialName("scheduled")
+    SCHEDULED,
+
+    @SerialName("live")
+    LIVE,
+
+    @SerialName("ended")
+    ENDED,
+
+    @SerialName("cancelled")
+    CANCELLED
+}
+
+@Serializable
+enum class ParticipantRole {
+    @SerialName("viewer")
+    VIEWER,
+
+    @SerialName("speaker")
+    SPEAKER,
+
+    @SerialName("moderator")
+    MODERATOR,
+
+    @SerialName("teacher")
+    TEACHER
+}
+
+@Serializable
+enum class ChatMessageType {
+    @SerialName("text")
+    TEXT,
+
+    @SerialName("question")
+    QUESTION,
+
+    @SerialName("answer")
+    ANSWER,
+
+    @SerialName("system")
+    SYSTEM
+}
+
+
+//=============================================================
+//=============================================================
+// ==================== MODELOS PRINCIPAIS ====================
+/**
+ * LiveSessionModel - Sessão de Aula ao Vivo
+ */
+
+@Serializable
+@Parcelize
+data class LiveSessionModel(
+    // Identificação
+    @SerialName("id")
+    val id: String = "",
+
+    @SerialName("title")
+    val title: String = "",
+
+    @SerialName("description")
+    val description: String = "",
+
+    @SerialName("subject")
+    val subject: String = "Matemática",
+
+    // Professor
+    @SerialName("teacher_id")
+    val teacherId: String = "",
+
+    @SerialName("teacher_name")
+    val teacherName: String = "",
+
+    @SerialName("teacher_avatar")
+    val teacherAvatar: String? = null,
+
+    // Agendamento
+    @SerialName("scheduled_start")
+    val scheduledStart: String = "", // ISO 8601 format
+
+    @SerialName("actual_start")
+    val actualStart: String? = null,
+
+    @SerialName("actual_end")
+    val actualEnd: String? = null,
+
+    @SerialName("duration_minutes")
+    val durationMinutes: Int = 60,
+
+    // Status
+    @SerialName("status")
+    val status: LiveStatus = LiveStatus.SCHEDULED,
+
+    // Streaming
+    @SerialName("stream_id")
+    val streamId: String? = null,
+
+    @SerialName("playback_url")
+    val playbackUrl: String? = null,
+
+    @SerialName("rtmp_url")
+    val rtmpUrl: String? = null,
+
+    @SerialName("stream_key")
+    val streamKey: String? = null,
+
+    // Configurações
+    @SerialName("max_participants")
+    val maxParticipants: Int? = null,
+
+    @SerialName("is_public")
+    val isPublic: Boolean = true,
+
+    @SerialName("requires_approval")
+    val requiresApproval: Boolean = false,
+
+    @SerialName("price")
+    val price: Double = 0.0,
+
+    // Métricas
+    @SerialName("participant_count")
+    val participantCount: Int = 0,
+
+    @SerialName("view_count")
+    val viewCount: Int = 0,
+
+    // Timestamps
+    @SerialName("created_at")
+    val createdAt: String = "",
+
+    @SerialName("updated_at")
+    val updatedAt: String? = null,
+
+    // Relations (para queries JOIN)
+    @SerialName("tb_user")
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    var teacher: UserModel? = null,
+
+    @SerialName("current_user_participant")
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    var currentUserParticipant: LiveParticipantModel? = null
+
+) : Parcelable
+
+@Serializable
+@Parcelize
+data class LiveParticipantModel(
+    @SerialName("id")
+    val id: String = "",
+
+    @SerialName("live_session_id")
+    val liveSessionId: String = "",
+
+    @SerialName("user_id")
+    val userId: String = "",
+
+    @SerialName("user_name")
+    val userName: String = "",
+
+    @SerialName("user_avatar")
+    val userAvatar: String? = null,
+
+    @SerialName("role")
+    val role: ParticipantRole = ParticipantRole.VIEWER,
+
+    @SerialName("is_approved")
+    val isApproved: Boolean = true,
+
+    @SerialName("joined_at")
+    val joinedAt: String = "",
+
+    @SerialName("left_at")
+    val leftAt: String? = null,
+
+    // Relations
+    @SerialName("tb_user")
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    var user: UserModel? = null,
+
+    @SerialName("live_session")
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    var liveSession: LiveSessionModel? = null
+
+) : Parcelable
+@Serializable
+@Parcelize
+data class LiveChatMessageModel(
+    @SerialName("id")
+    val id: String = "",
+
+    @SerialName("live_session_id")
+    val liveSessionId: String = "",
+
+    @SerialName("user_id")
+    val userId: String = "",
+
+    @SerialName("user_name")
+    val userName: String = "",
+
+    @SerialName("user_avatar")
+    val userAvatar: String? = null,
+
+    @SerialName("message")
+    val message: String = "",
+
+    @SerialName("message_type")
+    val messageType: ChatMessageType = ChatMessageType.TEXT,
+
+    @SerialName("is_approved")
+    val isApproved: Boolean = true,
+
+    @SerialName("created_at")
+    val createdAt: String = "",
+
+    // Relations
+    @SerialName("tb_user")
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    var user: UserModel? = null
+
+) : Parcelable
+// ==================== REQUEST/RESPONSE MODELS ====================
+
+@Serializable
+data class CreateLiveSessionRequest(
+    @SerialName("title")
+    val title: String,
+
+    @SerialName("description")
+    val description: String = "",
+
+    @SerialName("subject")
+    val subject: String = "Matemática",
+
+    @SerialName("scheduled_start")
+    val scheduledStart: String,
+
+    @SerialName("duration_minutes")
+    val durationMinutes: Int = 60,
+
+    @SerialName("max_participants")
+    val maxParticipants: Int? = null,
+
+    @SerialName("is_public")
+    val isPublic: Boolean = true,
+
+    @SerialName("requires_approval")
+    val requiresApproval: Boolean = false,
+
+    @SerialName("price")
+    val price: Double = 0.0
+)
+
+@Serializable
+data class UpdateLiveSessionRequest(
+    @SerialName("title")
+    val title: String? = null,
+
+    @SerialName("description")
+    val description: String? = null,
+
+    @SerialName("subject")
+    val subject: String? = null,
+
+    @SerialName("scheduled_start")
+    val scheduledStart: String? = null,
+
+    @SerialName("duration_minutes")
+    val durationMinutes: Int? = null,
+
+    @SerialName("max_participants")
+    val maxParticipants: Int? = null,
+
+    @SerialName("is_public")
+    val isPublic: Boolean? = null,
+
+    @SerialName("status")
+    val status: LiveStatus? = null
+)
+
+@Serializable
+data class JoinLiveSessionRequest(
+    @SerialName("live_session_id")
+    val liveSessionId: String,
+
+    @SerialName("role")
+    val role: ParticipantRole = ParticipantRole.VIEWER
+)
+
+@Serializable
+data class SendChatMessageRequest(
+    @SerialName("live_session_id")
+    val liveSessionId: String,
+
+    @SerialName("message")
+    val message: String,
+
+    @SerialName("message_type")
+    val messageType: ChatMessageType = ChatMessageType.TEXT
+)
+
+@Serializable
+data class StreamInfoResponse(
+    @SerialName("success")
+    val success: Boolean,
+
+    @SerialName("live_session")
+    val liveSession: LiveSessionModel,
+
+    @SerialName("stream_info")
+    val streamInfo: StreamInfo? = null,
+
+    @SerialName("error")
+    val error: String? = null
+)
+
+@Serializable
+data class LiveSessionUIModel(
+    val session: LiveSessionModel,
+    val formattedTime: String,
+    val statusBadge: String,
+    val statusColor: Color,
+    val canJoin: Boolean,
+    val isUserJoined: Boolean
+)
+
+
+
+@Serializable
+@Parcelize
+data class LiveReactionModel(
+    @SerialName("id")
+    val id: String = "",
+
+    @SerialName("live_session_id")
+    val liveSessionId: String = "",
+
+    @SerialName("user_id")
+    val userId: String = "",
+
+    @SerialName("emoji")
+    val emoji: String = "👍", // 👍, ❤️, 😂, 😮, 👏
+
+    @SerialName("created_at")
+    val createdAt: String = ""
+) : Parcelable
+
+@Serializable
+@Parcelize
+data class LivePollModel(
+    @SerialName("id")
+    val id: String = "",
+
+    @SerialName("live_session_id")
+    val liveSessionId: String = "",
+
+    @SerialName("question")
+    val question: String = "",
+
+    @SerialName("options")
+    val options: List<PollOption> = emptyList(),
+
+    @SerialName("is_active")
+    val isActive: Boolean = true,
+
+    @SerialName("created_at")
+    val createdAt: String = "",
+
+    @SerialName("ends_at")
+    val endsAt: String? = null
+) : Parcelable
+
+@Serializable
+@Parcelize
+data class PollOption(
+    @SerialName("id")
+    val id: String = "",
+
+    @SerialName("text")
+    val text: String = "",
+
+    @SerialName("vote_count")
+    val voteCount: Int = 0
+) : Parcelable
+
+@Serializable
+@Parcelize
+data class PollVoteModel(
+    @SerialName("id")
+    val id: String = "",
+
+    @SerialName("poll_id")
+    val pollId: String = "",
+
+    @SerialName("option_id")
+    val optionId: String = "",
+
+    @SerialName("user_id")
+    val userId: String = "",
+
+    @SerialName("created_at")
+    val createdAt: String = ""
+) : Parcelable
+@Serializable
+@Parcelize
+data class StreamQuality(
+    @SerialName("quality")
+    val quality: String = "auto", // "auto", "1080p", "720p", "480p", "360p"
+
+    @SerialName("bitrate")
+    val bitrate: Int = 2500, // kbps
+
+    @SerialName("fps")
+    val fps: Int = 30,
+
+    @SerialName("latency")
+    val latency: Int = 0 // ms
+) : Parcelable
+
+// Adicionar ao LiveSessionModel:
+@SerialName("available_qualities")
+val availableQualities: List<String> = listOf("auto", "720p", "480p", "360p")
+
+@Serializable
+data class StreamInfo(
+    @SerialName("rtmp_url")
+    val rtmpUrl: String,
+
+    @SerialName("stream_key")
+    val streamKey: String,
+
+    @SerialName("playback_url")
+    val playbackUrl: String,
+
+    // ✅ ADICIONAR
+    @SerialName("hls_url")
+    val hlsUrl: String? = null,
+
+    @SerialName("backup_url")
+    val backupUrl: String? = null,
+
+    @SerialName("chat_url")
+    val chatUrl: String? = null,
+
+    @SerialName("quality_options")
+    val qualityOptions: List<StreamQuality> = emptyList(),
+
+    @SerialName("server_region")
+    val serverRegion: String = "eu-west-1"
+)
+
+@Serializable
+@Parcelize
+data class LiveStreamStats(
+    @SerialName("live_session_id")
+    val liveSessionId: String = "",
+
+    @SerialName("current_viewers")
+    val currentViewers: Int = 0,
+
+    @SerialName("peak_viewers")
+    val peakViewers: Int = 0,
+
+    @SerialName("total_views")
+    val totalViews: Int = 0,
+
+    @SerialName("average_watch_time_seconds")
+    val averageWatchTimeSeconds: Int = 0,
+
+    @SerialName("chat_messages_count")
+    val chatMessagesCount: Int = 0,
+
+    @SerialName("reactions_count")
+    val reactionsCount: Int = 0,
+
+    @SerialName("bandwidth_mbps")
+    val bandwidthMbps: Double = 0.0,
+
+    @SerialName("buffering_ratio")
+    val bufferingRatio: Double = 0.0,
+
+    @SerialName("updated_at")
+    val updatedAt: String = ""
+) : Parcelable
+
+@Serializable
+@Parcelize
+data class LiveNotificationModel(
+    @SerialName("id")
+    val id: String = "",
+
+    @SerialName("live_session_id")
+    val liveSessionId: String = "",
+
+    @SerialName("user_id")
+    val userId: String = "",
+
+    @SerialName("type")
+    val type: NotificationType = NotificationType.LIVE_STARTING,
+
+    @SerialName("is_sent")
+    val isSent: Boolean = false,
+
+    @SerialName("sent_at")
+    val sentAt: String? = null,
+
+    @SerialName("created_at")
+    val createdAt: String = ""
+) : Parcelable
+
+
+@Serializable
+data class LiveSessionFilters(
+    @SerialName("status")
+    val status: LiveStatus? = null,
+
+    @SerialName("subject")
+    val subject: String? = null,
+
+    @SerialName("teacher_id")
+    val teacherId: String? = null,
+
+    @SerialName("is_public")
+    val isPublic: Boolean? = null,
+
+    @SerialName("min_price")
+    val minPrice: Double? = null,
+
+    @SerialName("max_price")
+    val maxPrice: Double? = null,
+
+    @SerialName("search_query")
+    val searchQuery: String? = null,
+
+    // ✅ ADICIONAR FILTROS
+    @SerialName("date_from")
+    val dateFrom: String? = null,  // ISO 8601
+
+    @SerialName("date_to")
+    val dateTo: String? = null,
+
+    @SerialName("min_participants")
+    val minParticipants: Int? = null,
+
+    @SerialName("max_participants")
+    val maxParticipants: Int? = null,
+
+    @SerialName("has_available_spots")
+    val hasAvailableSpots: Boolean? = null,
+
+    @SerialName("grade_level")
+    val gradeLevel: String? = null,  // "10ª Classe", "11ª Classe"
+
+    @SerialName("tags")
+    val tags: List<String>? = null,
+
+    // Paginação
+    @SerialName("page")
+    val page: Int = 1,
+
+    @SerialName("limit")
+    val limit: Int = 20,
+
+    @SerialName("sort_by")
+    val sortBy: String = "scheduled_start",
+
+    @SerialName("sort_order")
+    val sortOrder: String = "desc"
+)
+
+@Serializable
+@Parcelize
+data class LiveRecordingModel(
+    @SerialName("id")
+    val id: String = "",
+
+    @SerialName("live_session_id")
+    val liveSessionId: String = "",
+
+    @SerialName("video_url")
+    val videoUrl: String = "",
+
+    @SerialName("thumbnail_url")
+    val thumbnailUrl: String? = null,
+
+    @SerialName("duration_seconds")
+    val durationSeconds: Int = 0,
+
+    @SerialName("file_size_mb")
+    val fileSizeMb: Double = 0.0,
+
+    @SerialName("is_public")
+    val isPublic: Boolean = false,
+
+    @SerialName("is_processing")
+    val isProcessing: Boolean = true,
+
+    @SerialName("created_at")
+    val createdAt: String = ""
+) : Parcelable {
+    val formattedDuration: String
+        get() {
+            val hours = durationSeconds / 3600
+            val minutes = (durationSeconds % 3600) / 60
+            val seconds = durationSeconds % 60
+            return if (hours > 0) {
+                String.format("%d:%02d:%02d", hours, minutes, seconds)
+            } else {
+                String.format("%d:%02d", minutes, seconds)
+            }
+        }
+}

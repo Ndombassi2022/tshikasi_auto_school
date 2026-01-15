@@ -14,6 +14,7 @@ import com.tshikasi.tshikasi_auto_school.domain.datasource.GradeDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.GuardianDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.LessonDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.LessonProgressDataSource
+import com.tshikasi.tshikasi_auto_school.domain.datasource.*
 import com.tshikasi.tshikasi_auto_school.domain.datasource.MessageDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.NotificationDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.PaymentDataSource
@@ -41,6 +42,7 @@ import com.tshikasi.tshikasi_auto_school.domain.model.AssignmentSubmissionModel
 import com.tshikasi.tshikasi_auto_school.domain.model.AttendanceModel
 import com.tshikasi.tshikasi_auto_school.domain.model.AttendanceStatus
 import com.tshikasi.tshikasi_auto_school.domain.model.ClasseModel
+import com.tshikasi.tshikasi_auto_school.domain.model.CreateLiveSessionRequest
 import com.tshikasi.tshikasi_auto_school.domain.model.DifficultyLevel
 import com.tshikasi.tshikasi_auto_school.domain.model.ExamModel
 import com.tshikasi.tshikasi_auto_school.domain.model.ExamResultModel
@@ -52,6 +54,7 @@ import com.tshikasi.tshikasi_auto_school.domain.model.GuardianModel
 import com.tshikasi.tshikasi_auto_school.domain.model.GuardianRelation
 import com.tshikasi.tshikasi_auto_school.domain.model.LessonModel
 import com.tshikasi.tshikasi_auto_school.domain.model.LessonProgressModel
+import com.tshikasi.tshikasi_auto_school.domain.model.*
 import com.tshikasi.tshikasi_auto_school.domain.model.ManagerAccessLevel
 import com.tshikasi.tshikasi_auto_school.domain.model.MessageModel
 import com.tshikasi.tshikasi_auto_school.domain.model.MessageType
@@ -94,6 +97,10 @@ import com.tshikasi.tshikasi_auto_school.domain.repository.GradeRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.GuardianRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.LessonProgressRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.LessonRepository
+import com.tshikasi.tshikasi_auto_school.domain.repository.LiveChatRepository
+import com.tshikasi.tshikasi_auto_school.domain.repository.LiveParticipantRepository
+import com.tshikasi.tshikasi_auto_school.domain.repository.*
+import com.tshikasi.tshikasi_auto_school.domain.repository.LiveSessionRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.MessageRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.NotificationRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.PaymentRepository
@@ -115,6 +122,8 @@ import com.tshikasi.tshikasi_auto_school.domain.repository.UserActivityLogReposi
 import com.tshikasi.tshikasi_auto_school.domain.repository.UserRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.UserSessionRepository
 import com.tshikasi.tshikasi_auto_school.utils.NetworkError
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 
 // AssignmentRepositoryImpl
@@ -2672,3 +2681,596 @@ class UserSessionRepositoryImpl(
         return Either.catch { dataSource.getSessionActivity(userId, userType, days) }.mapLeft { it.toNetworkError() }
     }
 }
+
+
+
+//=========================================
+//==================================================
+// LIVE STREAM SECTION
+//==================================================
+// ==================== LIVE SESSION REPOSITORY IMPL ====================
+
+class LiveSessionRepositoryImpl(
+    private val dataSource: LiveSessionDataSource
+) : LiveSessionRepository {
+
+    // ==================== CREATE ====================
+
+    override suspend fun createLiveSession(request: CreateLiveSessionRequest): Either<NetworkError, LiveSessionModel> {
+        return Either.catch { dataSource.createLiveSession(request) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== READ ====================
+
+    override suspend fun getLiveSessionById(sessionId: String): Either<NetworkError, LiveSessionModel?> {
+        return Either.catch { dataSource.getLiveSessionById(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getAllLiveSessions(filters: LiveSessionFilters?, page: Int, pageSize: Int): Either<NetworkError, List<LiveSessionModel>> {
+        return Either.catch { dataSource.getAllLiveSessions(filters, page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getLiveSessionsByTeacher(teacherId: String, page: Int, pageSize: Int): Either<NetworkError, List<LiveSessionModel>> {
+        return Either.catch { dataSource.getLiveSessionsByTeacher(teacherId, page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getUpcomingLiveSessions(page: Int, pageSize: Int): Either<NetworkError, List<LiveSessionModel>> {
+        return Either.catch { dataSource.getUpcomingLiveSessions(page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getLiveNowSessions(): Either<NetworkError, List<LiveSessionModel>> {
+        return Either.catch { dataSource.getLiveNowSessions() }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getPastLiveSessions(page: Int, pageSize: Int): Either<NetworkError, List<LiveSessionModel>> {
+        return Either.catch { dataSource.getPastLiveSessions(page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getUserLiveSessions(userId: String, page: Int, pageSize: Int): Either<NetworkError, List<LiveSessionModel>> {
+        return Either.catch { dataSource.getUserLiveSessions(userId, page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getLiveSessionsByStatus(status: LiveStatus, page: Int, pageSize: Int): Either<NetworkError, List<LiveSessionModel>> {
+        return Either.catch { dataSource.getLiveSessionsByStatus(status, page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getLiveSessionsBySubject(subject: String, page: Int, pageSize: Int): Either<NetworkError, List<LiveSessionModel>> {
+        return Either.catch { dataSource.getLiveSessionsBySubject(subject, page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getRecentLiveSessions(limit: Int): Either<NetworkError, List<LiveSessionModel>> {
+        return Either.catch { dataSource.getRecentLiveSessions(limit) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== UPDATE ====================
+
+    override suspend fun updateLiveSession(sessionId: String, request: UpdateLiveSessionRequest): Either<NetworkError, LiveSessionModel> {
+        return Either.catch { dataSource.updateLiveSession(sessionId, request) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun startLiveSession(sessionId: String): Either<NetworkError, LiveSessionModel> {
+        return Either.catch { dataSource.startLiveSession(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun pauseLiveSession(sessionId: String): Either<NetworkError, LiveSessionModel> {
+        return Either.catch { dataSource.pauseLiveSession(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun resumeLiveSession(sessionId: String): Either<NetworkError, LiveSessionModel> {
+        return Either.catch { dataSource.resumeLiveSession(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun endLiveSession(sessionId: String): Either<NetworkError, LiveSessionModel> {
+        return Either.catch { dataSource.endLiveSession(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun cancelLiveSession(sessionId: String): Either<NetworkError, LiveSessionModel> {
+        return Either.catch { dataSource.cancelLiveSession(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun updateLiveMetrics(sessionId: String, participantCount: Int, viewCount: Int): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.updateLiveMetrics(sessionId, participantCount, viewCount) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun incrementParticipantCount(sessionId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.incrementParticipantCount(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun decrementParticipantCount(sessionId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.decrementParticipantCount(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== DELETE ====================
+
+    override suspend fun deleteLiveSession(sessionId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.deleteLiveSession(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun deleteCancelledSessions(olderThanDays: Int): Either<NetworkError, Int> {
+        return Either.catch { dataSource.deleteCancelledSessions(olderThanDays) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== STREAMING ====================
+
+    override suspend fun getStreamInfo(sessionId: String): Either<NetworkError, StreamInfoResponse> {
+        return Either.catch { dataSource.getStreamInfo(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun generateStreamKey(sessionId: String): Either<NetworkError, String> {
+        return Either.catch { dataSource.generateStreamKey(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== STATISTICS ====================
+
+    override suspend fun countLivesByStatus(status: LiveStatus): Either<NetworkError, Int> {
+        return Either.catch { dataSource.countLivesByStatus(status) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun countTeacherLives(teacherId: String, status: LiveStatus?): Either<NetworkError, Int> {
+        return Either.catch { dataSource.countTeacherLives(teacherId, status) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getLiveStatistics(teacherId: String?, days: Int): Either<NetworkError, Map<String, Any>> {
+        return Either.catch { dataSource.getLiveStatistics(teacherId, days) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== REALTIME ====================
+
+    override fun observeLiveSession(sessionId: String): Flow<Either<NetworkError, LiveSessionModel>> {
+        return dataSource.observeLiveSession(sessionId).map { session ->
+            Either.catch { session }.mapLeft { it.toNetworkError() }
+        }
+    }
+
+    override fun observeLiveNowSessions(): Flow<Either<NetworkError, List<LiveSessionModel>>> {
+        return dataSource.observeLiveNowSessions().map { sessions ->
+            Either.catch { sessions }.mapLeft { it.toNetworkError() }
+        }
+    }
+}
+
+// ==================== LIVE PARTICIPANT REPOSITORY IMPL ====================
+
+class LiveParticipantRepositoryImpl(
+    private val dataSource: LiveParticipantDataSource
+) : LiveParticipantRepository {
+
+    // ==================== CREATE ====================
+
+    override suspend fun joinLiveSession(request: JoinLiveSessionRequest): Either<NetworkError, LiveParticipantModel> {
+        return Either.catch { dataSource.joinLiveSession(request) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== READ ====================
+
+    override suspend fun getParticipants(sessionId: String, page: Int, pageSize: Int): Either<NetworkError, List<LiveParticipantModel>> {
+        return Either.catch { dataSource.getParticipants(sessionId, page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getParticipant(sessionId: String, userId: String): Either<NetworkError, LiveParticipantModel?> {
+        return Either.catch { dataSource.getParticipant(sessionId, userId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getParticipantsByRole(sessionId: String, role: ParticipantRole): Either<NetworkError, List<LiveParticipantModel>> {
+        return Either.catch { dataSource.getParticipantsByRole(sessionId, role) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getOnlineParticipants(sessionId: String): Either<NetworkError, List<LiveParticipantModel>> {
+        return Either.catch { dataSource.getOnlineParticipants(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getPendingApprovals(sessionId: String): Either<NetworkError, List<LiveParticipantModel>> {
+        return Either.catch { dataSource.getPendingApprovals(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getUserParticipationHistory(userId: String, page: Int, pageSize: Int): Either<NetworkError, List<LiveParticipantModel>> {
+        return Either.catch { dataSource.getUserParticipationHistory(userId, page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== UPDATE ====================
+
+    override suspend fun leaveLiveSession(sessionId: String, userId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.leaveLiveSession(sessionId, userId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun updateParticipantRole(participantId: String, newRole: ParticipantRole): Either<NetworkError, LiveParticipantModel> {
+        return Either.catch { dataSource.updateParticipantRole(participantId, newRole) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun approveParticipant(participantId: String): Either<NetworkError, LiveParticipantModel> {
+        return Either.catch { dataSource.approveParticipant(participantId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun rejectParticipant(participantId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.rejectParticipant(participantId) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== DELETE ====================
+
+    override suspend fun removeParticipant(participantId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.removeParticipant(participantId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun cleanupOfflineParticipants(sessionId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.cleanupOfflineParticipants(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== STATISTICS ====================
+
+    override suspend fun countParticipants(sessionId: String, onlineOnly: Boolean): Either<NetworkError, Int> {
+        return Either.catch { dataSource.countParticipants(sessionId, onlineOnly) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun countUserParticipations(userId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.countUserParticipations(userId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun isUserInLive(sessionId: String, userId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.isUserInLive(sessionId, userId) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== REALTIME ====================
+
+    override fun observeParticipants(sessionId: String): Flow<Either<NetworkError, List<LiveParticipantModel>>> {
+        return dataSource.observeParticipants(sessionId).map { participants ->
+            Either.catch { participants }.mapLeft { it.toNetworkError() }
+        }
+    }
+
+    override fun observeOnlineCount(sessionId: String): Flow<Either<NetworkError, Int>> {
+        return dataSource.observeOnlineCount(sessionId).map { count ->
+            Either.catch { count }.mapLeft { it.toNetworkError() }
+        }
+    }
+}
+
+// ==================== LIVE CHAT REPOSITORY IMPL ====================
+
+class LiveChatRepositoryImpl(
+    private val dataSource: LiveChatDataSource
+) : LiveChatRepository {
+
+    // ==================== CREATE ====================
+
+    override suspend fun sendMessage(request: SendChatMessageRequest): Either<NetworkError, LiveChatMessageModel> {
+        return Either.catch { dataSource.sendMessage(request) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== READ ====================
+
+    override suspend fun getMessages(sessionId: String, limit: Int, offset: Int): Either<NetworkError, List<LiveChatMessageModel>> {
+        return Either.catch { dataSource.getMessages(sessionId, limit, offset) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getRecentMessages(sessionId: String, limit: Int): Either<NetworkError, List<LiveChatMessageModel>> {
+        return Either.catch { dataSource.getRecentMessages(sessionId, limit) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getMessagesByType(sessionId: String, messageType: ChatMessageType, limit: Int): Either<NetworkError, List<LiveChatMessageModel>> {
+        return Either.catch { dataSource.getMessagesByType(sessionId, messageType, limit) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getUnansweredQuestions(sessionId: String): Either<NetworkError, List<LiveChatMessageModel>> {
+        return Either.catch { dataSource.getUnansweredQuestions(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getUserMessages(sessionId: String, userId: String): Either<NetworkError, List<LiveChatMessageModel>> {
+        return Either.catch { dataSource.getUserMessages(sessionId, userId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getPendingMessages(sessionId: String): Either<NetworkError, List<LiveChatMessageModel>> {
+        return Either.catch { dataSource.getPendingMessages(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== UPDATE ====================
+
+    override suspend fun approveMessage(messageId: String): Either<NetworkError, LiveChatMessageModel> {
+        return Either.catch { dataSource.approveMessage(messageId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun pinMessage(messageId: String): Either<NetworkError, LiveChatMessageModel> {
+        return Either.catch { dataSource.pinMessage(messageId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun unpinMessage(messageId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.unpinMessage(messageId) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== DELETE ====================
+
+    override suspend fun deleteMessage(messageId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.deleteMessage(messageId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun deleteUserMessages(sessionId: String, userId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.deleteUserMessages(sessionId, userId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun clearOldMessages(sessionId: String, olderThanMinutes: Int): Either<NetworkError, Int> {
+        return Either.catch { dataSource.clearOldMessages(sessionId, olderThanMinutes) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== STATISTICS ====================
+
+    override suspend fun countMessages(sessionId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.countMessages(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun countUserMessages(sessionId: String, userId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.countUserMessages(sessionId, userId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun countMessagesByType(sessionId: String): Either<NetworkError, Map<ChatMessageType, Int>> {
+        return Either.catch { dataSource.countMessagesByType(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    // ==================== REALTIME ====================
+
+    override fun observeMessages(sessionId: String): Flow<Either<NetworkError, LiveChatMessageModel>> {
+        return dataSource.observeMessages(sessionId).map { message ->
+            Either.catch { message }.mapLeft { it.toNetworkError() }
+        }
+    }
+}
+
+// ==================== LIVE REACTION REPOSITORY IMPL ====================
+
+class LiveReactionRepositoryImpl(
+    private val dataSource: LiveReactionDataSource
+) : LiveReactionRepository {
+
+    override suspend fun sendReaction(sessionId: String, userId: String, emoji: String): Either<NetworkError, LiveReactionModel> {
+        return Either.catch { dataSource.sendReaction(sessionId, userId, emoji) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getReactions(sessionId: String, limit: Int): Either<NetworkError, List<LiveReactionModel>> {
+        return Either.catch { dataSource.getReactions(sessionId, limit) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getRecentReactions(sessionId: String, seconds: Int): Either<NetworkError, List<LiveReactionModel>> {
+        return Either.catch { dataSource.getRecentReactions(sessionId, seconds) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun clearOldReactions(sessionId: String, olderThanSeconds: Int): Either<NetworkError, Int> {
+        return Either.catch { dataSource.clearOldReactions(sessionId, olderThanSeconds) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun countReactionsByType(sessionId: String): Either<NetworkError, Map<String, Int>> {
+        return Either.catch { dataSource.countReactionsByType(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun countTotalReactions(sessionId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.countTotalReactions(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override fun observeReactions(sessionId: String): Flow<Either<NetworkError, LiveReactionModel>> {
+        return dataSource.observeReactions(sessionId).map { reaction ->
+            Either.catch { reaction }.mapLeft { it.toNetworkError() }
+        }
+    }
+}
+
+// ==================== LIVE POLL REPOSITORY IMPL ====================
+
+class LivePollRepositoryImpl(
+    private val dataSource: LivePollDataSource
+) : LivePollRepository {
+
+    override suspend fun createPoll(sessionId: String, question: String, options: List<String>, durationSeconds: Int?): Either<NetworkError, LivePollModel> {
+        return Either.catch { dataSource.createPoll(sessionId, question, options, durationSeconds) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun votePoll(pollId: String, optionId: String, userId: String): Either<NetworkError, PollVoteModel> {
+        return Either.catch { dataSource.votePoll(pollId, optionId, userId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getPolls(sessionId: String): Either<NetworkError, List<LivePollModel>> {
+        return Either.catch { dataSource.getPolls(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getPollById(pollId: String): Either<NetworkError, LivePollModel?> {
+        return Either.catch { dataSource.getPollById(pollId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getActivePolls(sessionId: String): Either<NetworkError, List<LivePollModel>> {
+        return Either.catch { dataSource.getActivePolls(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getPollVotes(pollId: String): Either<NetworkError, List<PollVoteModel>> {
+        return Either.catch { dataSource.getPollVotes(pollId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun hasUserVoted(pollId: String, userId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.hasUserVoted(pollId, userId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun closePoll(pollId: String): Either<NetworkError, LivePollModel> {
+        return Either.catch { dataSource.closePoll(pollId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun deletePoll(pollId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.deletePoll(pollId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun countPollVotes(pollId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.countPollVotes(pollId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getPollResults(pollId: String): Either<NetworkError, Map<String, Int>> {
+        return Either.catch { dataSource.getPollResults(pollId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override fun observePollResults(pollId: String): Flow<Either<NetworkError, LivePollModel>> {
+        return dataSource.observePollResults(pollId).map { poll ->
+            Either.catch { poll }.mapLeft { it.toNetworkError() }
+        }
+    }
+}
+
+// ==================== LIVE STATS REPOSITORY IMPL ====================
+
+class LiveStatsRepositoryImpl(
+    private val dataSource: LiveStatsDataSource
+) : LiveStatsRepository {
+
+    override suspend fun createLiveStats(sessionId: String): Either<NetworkError, LiveStreamStats> {
+        return Either.catch { dataSource.createLiveStats(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun updateLiveStats(stats: LiveStreamStats): Either<NetworkError, LiveStreamStats> {
+        return Either.catch { dataSource.updateLiveStats(stats) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun recordView(sessionId: String, userId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.recordView(sessionId, userId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun recordWatchTime(sessionId: String, userId: String, seconds: Int): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.recordWatchTime(sessionId, userId, seconds) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun incrementMessageCount(sessionId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.incrementMessageCount(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun incrementReactionCount(sessionId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.incrementReactionCount(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun updatePeakViewers(sessionId: String, viewers: Int): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.updatePeakViewers(sessionId, viewers) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getLiveStats(sessionId: String): Either<NetworkError, LiveStreamStats?> {
+        return Either.catch { dataSource.getLiveStats(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getTeacherStats(teacherId: String): Either<NetworkError, TeacherLiveStats> {
+        return Either.catch { dataSource.getTeacherStats(teacherId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getStatsByPeriod(teacherId: String, startDate: String, endDate: String): Either<NetworkError, Map<String, Any>> {
+        return Either.catch { dataSource.getStatsByPeriod(teacherId, startDate, endDate) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun calculateAverageViewers(sessionId: String): Either<NetworkError, Double> {
+        return Either.catch { dataSource.calculateAverageViewers(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun calculateRetentionRate(sessionId: String): Either<NetworkError, Double> {
+        return Either.catch { dataSource.calculateRetentionRate(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun calculateEngagementRate(sessionId: String): Either<NetworkError, Double> {
+        return Either.catch { dataSource.calculateEngagementRate(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override fun observeLiveStats(sessionId: String): Flow<Either<NetworkError, LiveStreamStats>> {
+        return dataSource.observeLiveStats(sessionId).map { stats ->
+            Either.catch { stats }.mapLeft { it.toNetworkError() }
+        }
+    }
+}
+
+// ==================== LIVE RECORDING REPOSITORY IMPL ====================
+
+class LiveRecordingRepositoryImpl(
+    private val dataSource: LiveRecordingDataSource
+) : LiveRecordingRepository {
+
+    override suspend fun startRecording(sessionId: String): Either<NetworkError, LiveRecordingModel> {
+        return Either.catch { dataSource.startRecording(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getRecordingById(recordingId: String): Either<NetworkError, LiveRecordingModel?> {
+        return Either.catch { dataSource.getRecordingById(recordingId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getRecordingsBySession(sessionId: String): Either<NetworkError, List<LiveRecordingModel>> {
+        return Either.catch { dataSource.getRecordingsBySession(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getRecordingsByTeacher(teacherId: String, page: Int, pageSize: Int): Either<NetworkError, List<LiveRecordingModel>> {
+        return Either.catch { dataSource.getRecordingsByTeacher(teacherId, page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getPublicRecordings(page: Int, pageSize: Int): Either<NetworkError, List<LiveRecordingModel>> {
+        return Either.catch { dataSource.getPublicRecordings(page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getRecentRecordings(limit: Int): Either<NetworkError, List<LiveRecordingModel>> {
+        return Either.catch { dataSource.getRecentRecordings(limit) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun stopRecording(recordingId: String): Either<NetworkError, LiveRecordingModel> {
+        return Either.catch { dataSource.stopRecording(recordingId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun updateRecordingVisibility(recordingId: String, isPublic: Boolean): Either<NetworkError, LiveRecordingModel> {
+        return Either.catch { dataSource.updateRecordingVisibility(recordingId, isPublic) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun updateProcessingStatus(recordingId: String, isProcessing: Boolean): Either<NetworkError, LiveRecordingModel> {
+        return Either.catch { dataSource.updateProcessingStatus(recordingId, isProcessing) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun deleteRecording(recordingId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.deleteRecording(recordingId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun countTeacherRecordings(teacherId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.countTeacherRecordings(teacherId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getTotalRecordingSize(teacherId: String): Either<NetworkError, Double> {
+        return Either.catch { dataSource.getTotalRecordingSize(teacherId) }.mapLeft { it.toNetworkError() }
+    }
+}
+
+// ==================== LIVE NOTIFICATION REPOSITORY IMPL ====================
+
+class LiveNotificationRepositoryImpl(
+    private val dataSource: LiveNotificationDataSource
+) : LiveNotificationRepository {
+
+    override suspend fun createNotification(sessionId: String, userId: String, type: NotificationType): Either<NetworkError, LiveNotificationModel> {
+        return Either.catch { dataSource.createNotification(sessionId, userId, type) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun notifyLiveStartingSoon(sessionId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.notifyLiveStartingSoon(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun notifyLiveStarted(sessionId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.notifyLiveStarted(sessionId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun notifyRecordingAvailable(sessionId: String, recordingId: String): Either<NetworkError, Int> {
+        return Either.catch { dataSource.notifyRecordingAvailable(sessionId, recordingId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getUserNotifications(userId: String, page: Int, pageSize: Int): Either<NetworkError, List<LiveNotificationModel>> {
+        return Either.catch { dataSource.getUserNotifications(userId, page, pageSize) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun getPendingNotifications(): Either<NetworkError, List<LiveNotificationModel>> {
+        return Either.catch { dataSource.getPendingNotifications() }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun markAsSent(notificationId: String): Either<NetworkError, LiveNotificationModel> {
+        return Either.catch { dataSource.markAsSent(notificationId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun deleteNotification(notificationId: String): Either<NetworkError, Boolean> {
+        return Either.catch { dataSource.deleteNotification(notificationId) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun clearOldNotifications(olderThanDays: Int): Either<NetworkError, Int> {
+        return Either.catch { dataSource.clearOldNotifications(olderThanDays) }.mapLeft { it.toNetworkError() }
+    }
+
+    override suspend fun countPendingNotifications(userId: String?): Either<NetworkError, Int> {
+        return Either.catch { dataSource.countPendingNotifications(userId) }.mapLeft { it.toNetworkError() }
+    }
+}
+

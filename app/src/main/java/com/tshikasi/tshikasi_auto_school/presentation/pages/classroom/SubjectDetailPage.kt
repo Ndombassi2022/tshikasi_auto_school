@@ -448,7 +448,7 @@ fun getSubjectLessons(subjectName: String): List<VideoLesson> {
         else -> emptyList()
     }
 }
-
+/*
 private val mathLessons = listOf(
     VideoLesson(
         id = 1,
@@ -458,7 +458,7 @@ private val mathLessons = listOf(
         grade = "10ª Classe",
         teacher = "Prof. João Silva",
         duration = "25:30",
-        videoUrl = "https://yucjmzzontuplfsyipro.supabase.co/storage/v1/object/public/videos/chat/video/EQUACAO%20DO%202%20GRAU.mp4",//"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        videoUrl = "https://yucjmzzontuplfsyipro.supabase.co/storage/v1/object/public/videos/video/autoSchool/10classe/matematica/aula1/output.m3u8",//"https://yucjmzzontuplfsyipro.supabase.co/storage/v1/object/public/videos/chat/video/EQUACAO%20DO%202%20GRAU.mp4",//"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
         views = 1250,
         progress = 45,
         hasAudio = true,
@@ -515,7 +515,110 @@ private val mathLessons = listOf(
         audioUrl = "https://www.sample-videos.com/audio/mp3/crowd-cheering.mp3"
     )
 )
-
+*/
+private val mathLessons = listOf(
+    VideoLesson(
+        id = 1,
+        title = "Equações do 2º Grau - Fórmula de Bhaskara",
+        subject = "Matemática",
+        subjectColor = Color(0xFFEF4444),
+        grade = "10ª Classe",
+        teacher = "Prof. João Silva",
+        duration = "25:30",
+        // ✅ URL CORRETA: Via Cloudflare Worker com cache
+        videoUrl = "https://falling-mountain-2ba9.ndombassi2025.workers.dev/videos/video/autoSchool/10classe/matematica/aula1/output.m3u8",
+        views = 1250,
+        progress = 45,
+        hasAudio = true,
+        isDownloaded = true,
+        isFavorite = true,
+        audioUrl = "https://www.sample-videos.com/audio/mp3/crowd-cheering.mp3"
+    ),
+    VideoLesson(
+        id = 2,
+        title = "Funções Quadráticas - Gráficos e Raízes",
+        subject = "Matemática",
+        subjectColor = Color(0xFFEF4444),
+        grade = "10ª Classe",
+        teacher = "Prof. João Silva",
+        duration = "30:15",
+        // ✅ URL via Worker para MP4 (converter para HLS depois)
+        videoUrl = "https://falling-mountain-2ba9.ndombassi2025.workers.dev/videos/chat/video/funcao_exponencial_10classe.mp4",
+        views = 980,
+        progress = 0,
+        hasAudio = true,
+        isDownloaded = false,
+        isFavorite = false,
+        audioUrl = "https://www.sample-videos.com/audio/mp3/crowd-cheering.mp3"
+    ),
+    VideoLesson(
+        id = 3,
+        title = "Geometria Analítica - Distância entre Pontos",
+        subject = "Matemática",
+        subjectColor = Color(0xFFEF4444),
+        grade = "10ª Classe",
+        teacher = "Prof. João Silva",
+        duration = "28:45",
+        // ✅ Exemplo HLS via Worker (para quando converter)
+        videoUrl = "https://falling-mountain-2ba9.ndombassi2025.workers.dev/videos/geometria_analitica/output.m3u8",
+        views = 1500,
+        progress = 100,
+        hasAudio = true,
+        isDownloaded = true,
+        isFavorite = true,
+        audioUrl = "https://www.sample-videos.com/audio/mp3/crowd-cheering.mp3"
+    ),
+    VideoLesson(
+        id = 4,
+        title = "Trigonometria - Seno, Cosseno e Tangente",
+        subject = "Matemática",
+        subjectColor = Color(0xFFEF4444),
+        grade = "10ª Classe",
+        teacher = "Prof. João Silva",
+        duration = "35:20",
+        // ✅ Outro exemplo HLS via Worker
+        videoUrl = "https://falling-mountain-2ba9.ndombassi2025.workers.dev/videos/trigonometria/output.m3u8",
+        views = 2200,
+        progress = 20,
+        hasAudio = false,
+        isDownloaded = false,
+        isFavorite = false,
+        audioUrl = "https://www.sample-videos.com/audio/mp3/crowd-cheering.mp3"
+    ),
+    // ✅ MAIS AULAS ADICIONADAS:
+    VideoLesson(
+        id = 5,
+        title = "Logaritmos - Propriedades e Aplicações",
+        subject = "Matemática",
+        subjectColor = Color(0xFFEF4444),
+        grade = "10ª Classe",
+        teacher = "Prof. Maria Santos",
+        duration = "32:10",
+        videoUrl = "https://falling-mountain-2ba9.ndombassi2025.workers.dev/videos/logaritmos/output.m3u8",
+        views = 1800,
+        progress = 60,
+        hasAudio = true,
+        isDownloaded = false,
+        isFavorite = true,
+        audioUrl = "https://www.sample-videos.com/audio/mp3/crowd-cheering.mp3"
+    ),
+    VideoLesson(
+        id = 6,
+        title = "Progressões Aritméticas",
+        subject = "Matemática",
+        subjectColor = Color(0xFFEF4444),
+        grade = "10ª Classe",
+        teacher = "Prof. Carlos Mendes",
+        duration = "27:55",
+        videoUrl = "https://falling-mountain-2ba9.ndombassi2025.workers.dev/videos/progressoes/output.m3u8",
+        views = 2100,
+        progress = 80,
+        hasAudio = true,
+        isDownloaded = true,
+        isFavorite = false,
+        audioUrl = "https://www.sample-videos.com/audio/mp3/crowd-cheering.mp3"
+    )
+)
 private val portugueseLessons = listOf(
     VideoLesson(
         id = 5,

@@ -12,6 +12,7 @@ composeBom = "2024.02.00"
 # Firebase - Use versões mais recentes e compatíveis
 firebaseBom = "33.1.0" # Versão mais estável
 firebaseCrashlyticsBuildtools = "3.0.2"
+constraintlayout = "2.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,6 +33,7 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 # Firebase - Apenas o BOM
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 
 # REMOVA todas as outras bibliotecas do Firebase daqui
 

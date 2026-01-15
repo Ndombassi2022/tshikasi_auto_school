@@ -108,6 +108,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.constraintlayout)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -203,4 +204,10 @@ dependencies {
     implementation("io.insert-koin:koin-android:3.5.0")
     implementation("io.insert-koin:koin-androidx-compose:3.5.0")
     testImplementation("io.insert-koin:koin-test:3.5.0")
+
+    // ExoPlayer core (você já deve ter)
+    implementation("androidx.media3:media3-exoplayer:1.2.0")
+
+    // ADICIONE ESTA LINHA - HLS support
+    implementation("androidx.media3:media3-exoplayer-hls:1.2.0")
 }

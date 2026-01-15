@@ -34,6 +34,12 @@ import kotlinx.datetime.Clock
 
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
+import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.decodeRecord
+import io.github.jan.supabase.realtime.postgresChangeFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -49,7 +55,9 @@ import kotlinx.serialization.json.put
 import java.io.FileDescriptor.`in`
 import java.lang.System.`in`
 import java.util.Objects.isNull
-
+import java.util.UUID
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.mapLatest
 /*
 class AssignmentDataSourceImpl : AssignmentDataSource {
 
@@ -10790,5 +10798,1742 @@ class UserSessionDataSourceImpl : UserSessionDataSource {
             println("ERRO AO OBTER ATIVIDADE DE SESSIONS DO USER $userId: ${e.message}")
             emptyMap()
         }
+    }
+}
+
+
+
+//==============================================================================================
+//===================== LIVE SESSION DATASOURCE IMPLEMENTATION ===============================
+//==============================================================================================
+/*
+class LiveSessionDataSourceImpl : LiveSessionDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "live_sessions"
+
+    // ==================== CREATE ====================
+
+    override suspend fun createLiveSession(request: CreateLiveSessionRequest): LiveSessionModel {
+        return try {
+            val session = LiveSessionModel(
+                id = UUID.randomUUID().toString(),
+                title = request.title,
+                description = request.description,
+                subject = request.subject,
+                scheduledStart = request.scheduledStart,
+                durationMinutes = request.durationMinutes,
+                maxParticipants = request.maxParticipants,
+                isPublic = request.isPublic,
+                requiresApproval = request.requiresApproval,
+                price = request.price,
+                status = LiveStatus.SCHEDULED,
+                createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .insert(session) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CRIAR LIVE SESSION: ${e.message}")
+            throw e
+        }
+    }
+
+    // ==================== READ ====================
+
+    override suspend fun getLiveSessionById(sessionId: String): LiveSessionModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", sessionId) }
+                }
+                .decodeList<LiveSessionModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVE SESSION POR ID $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllLiveSessions(
+        filters: LiveSessionFilters?,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        filters?.status?.let { eq("status", it.name.lowercase()) }
+                        filters?.subject?.let { eq("subject", it) }
+                        filters?.teacherId?.let { eq("teacher_id", it) }
+                        filters?.isPublic?.let { eq("is_public", it) }
+                        filters?.minPrice?.let { gte("price", it) }
+                        filters?.maxPrice?.let { lte("price", it) }
+                      //  filters?.searchQuery?.let {   or("title.ilike.%$it%,description.ilike.%$it%") }
+                        filters?.dateFrom?.let { gte("scheduled_start", it) }
+                        filters?.dateTo?.let { lte("scheduled_start", it) }
+                        filters?.gradeLevel?.let { eq("grade_level", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order(filters?.sortBy ?: "scheduled_start",
+                        if (filters?.sortOrder == "asc") Order.ASCENDING else Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODAS AS LIVE SESSIONS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveSessionsByTeacher(
+        teacherId: String,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("teacher_id", teacherId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES DO PROFESSOR $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getUpcomingLiveSessions(page: Int, pageSize: Int): List<LiveSessionModel> {
+        return try {
+            val now = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("status", "scheduled")
+                        gte("scheduled_start", now)
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.ASCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES AGENDADAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveNowSessions(): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", "live") }
+                    order("actual_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES AO VIVO: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getPastLiveSessions(page: Int, pageSize: Int): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", "ended") }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("actual_end", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES PASSADAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getUserLiveSessions(
+        userId: String,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            // Query lives where user is a participant
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        // Usando inner join com live_participants
+                       // or("teacher_id.eq.$userId")
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES DO USUÁRIO $userId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveSessionsByStatus(
+        status: LiveStatus,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", status.name.lowercase()) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES POR STATUS $status: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveSessionsBySubject(
+        subject: String,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("subject", subject) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES POR DISCIPLINA $subject: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getRecentLiveSessions(limit: Int): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    limit(limit.toLong())
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES RECENTES: ${e.message}")
+            throw e
+        }
+    }
+
+    // ==================== UPDATE ====================
+
+    override suspend fun updateLiveSession(
+        sessionId: String,
+        request: UpdateLiveSessionRequest
+    ): LiveSessionModel {
+        return try {
+            val updates = buildMap {
+                request.title?.let { put("title", it) }
+                request.description?.let { put("description", it) }
+                request.subject?.let { put("subject", it) }
+                request.scheduledStart?.let { put("scheduled_start", it) }
+                request.durationMinutes?.let { put("duration_minutes", it) }
+                request.maxParticipants?.let { put("max_participants", it) }
+                request.isPublic?.let { put("is_public", it) }
+                request.status?.let { put("status", it.name.lowercase()) }
+                put("updated_at", Clock.System.todayIn(TimeZone.currentSystemDefault()).toString())
+            }
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun startLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "live",
+                "actual_start" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString(),
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO INICIAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun pauseLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "paused",
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PAUSAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun resumeLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "live",
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO RETOMAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun endLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "ended",
+                "actual_end" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString(),
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO FINALIZAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun cancelLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "cancelled",
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CANCELAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateLiveMetrics(
+        sessionId: String,
+        participantCount: Int,
+        viewCount: Int
+    ): Boolean {
+        return try {
+            val updates = mapOf(
+                "participant_count" to participantCount,
+                "view_count" to viewCount,
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                }
+            true
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR MÉTRICAS DA LIVE $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun incrementParticipantCount(sessionId: String): Boolean {
+        return try {
+            // RPC call or fetch + increment + update
+            val current = getLiveSessionById(sessionId)
+            current?.let {
+                val updates = mapOf(
+                    "participant_count" to (it.participantCount + 1),
+                    "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+                )
+                client.postgrest[schema, table]
+                    .update(updates) {
+                        filter { eq("id", sessionId) }
+                    }
+                true
+            } ?: false
+        } catch (e: Exception) {
+            println("ERRO AO INCREMENTAR PARTICIPANTES DA LIVE $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun decrementParticipantCount(sessionId: String): Boolean {
+        return try {
+            val current = getLiveSessionById(sessionId)
+            current?.let {
+                val newCount = maxOf(0, it.participantCount - 1)
+                val updates = mapOf(
+                    "participant_count" to newCount,
+                    "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+                )
+                client.postgrest[schema, table]
+                    .update(updates) {
+                        filter { eq("id", sessionId) }
+                    }
+                true
+            } ?: false
+        } catch (e: Exception) {
+            println("ERRO AO DECREMENTAR PARTICIPANTES DA LIVE $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    // ==================== DELETE ====================
+
+    override suspend fun deleteLiveSession(sessionId: String): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", sessionId) }
+                }
+            true
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR LIVE SESSION $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteCancelledSessions(olderThanDays: Int): Int {
+        return try {
+            val threshold = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            client.postgrest[schema, table]
+                .delete {
+                    filter {
+                        eq("status", "cancelled")
+                        lt("created_at", threshold)
+                    }
+                }
+            // Supabase delete não retorna count, usar RPC se precisar
+            0
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR LIVES CANCELADAS ANTIGAS: ${e.message}")
+            0
+        }
+    }
+
+    // ==================== STREAMING ====================
+
+    override suspend fun getStreamInfo(sessionId: String): StreamInfoResponse {
+        return try {
+            val session = getLiveSessionById(sessionId)
+            session?.let {
+                StreamInfoResponse(
+                    success = true,
+                    liveSession = it,
+                    streamInfo = StreamInfo(
+                        rtmpUrl = it.rtmpUrl ?: "",
+                        streamKey = it.streamKey ?: "",
+                        playbackUrl = it.playbackUrl ?: ""
+                    )
+                )
+            } ?: StreamInfoResponse(
+                success = false,
+                liveSession = LiveSessionModel(),
+                error = "Session not found"
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER STREAM INFO $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun generateStreamKey(sessionId: String): String {
+        return try {
+            val streamKey = UUID.randomUUID().toString()
+            val updates = mapOf(
+                "stream_key" to streamKey,
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                }
+            streamKey
+        } catch (e: Exception) {
+            println("ERRO AO GERAR STREAM KEY $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    // ==================== STATISTICS ====================
+
+    override suspend fun countLivesByStatus(status: LiveStatus): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("status", status.name.lowercase()) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR LIVES POR STATUS $status: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countTeacherLives(teacherId: String, status: LiveStatus?): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        status?.let { eq("status", it.name.lowercase()) }
+                    }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR LIVES DO PROFESSOR $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveStatistics(teacherId: String?, days: Int): Map<String, Any> {
+        return try {
+            // Placeholder - usar RPC para estatísticas complexas
+            mapOf(
+                "total_lives" to 0,
+                "total_viewers" to 0,
+                "average_viewers" to 0.0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER ESTATÍSTICAS DE LIVES: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    // ==================== REALTIME ====================
+
+    override fun observeLiveSession(sessionId: String): Flow<LiveSessionModel> {
+        return client.channel("live_session_$sessionId")
+            .postgresChangeFlow<PostgresAction>(schema) {
+                table = this@LiveSessionDataSourceImpl.table
+                filter("id=eq.$sessionId")
+            }
+            .map { action ->
+                when (action) {
+                    is PostgresAction.Update -> action.decodeRecord<LiveSessionModel>()
+                    is PostgresAction.Insert -> action.decodeRecord<LiveSessionModel>()
+                    else -> LiveSessionModel()
+                }
+            }
+    }
+
+    override fun observeLiveNowSessions(): Flow<List<LiveSessionModel>> {
+        return client.channel("live_now_sessions")
+            .postgresChangeFlow<PostgresAction>(schema) {
+                table = this@LiveSessionDataSourceImpl.table
+                filter("status=eq.live")
+            }
+            .map {
+                // Fetch all live sessions on change
+                getLiveNowSessions()
+            }
+    }
+}
+ */
+
+/*
+class LiveSessionDataSourceImpl : LiveSessionDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "live_sessions"
+
+    // ==================== CREATE ====================
+
+    override suspend fun createLiveSession(request: CreateLiveSessionRequest): LiveSessionModel {
+        return try {
+            val session = LiveSessionModel(
+                id = UUID.randomUUID().toString(),
+                title = request.title,
+                description = request.description,
+                subject = request.subject,
+                scheduledStart = request.scheduledStart,
+                durationMinutes = request.durationMinutes,
+                maxParticipants = request.maxParticipants,
+                isPublic = request.isPublic,
+                requiresApproval = request.requiresApproval,
+                price = request.price,
+                status = LiveStatus.SCHEDULED,
+                createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .insert(session) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CRIAR LIVE SESSION: ${e.message}")
+            throw e
+        }
+    }
+
+    // ==================== READ ====================
+
+    override suspend fun getLiveSessionById(sessionId: String): LiveSessionModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", sessionId) }
+                }
+                .decodeList<LiveSessionModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVE SESSION POR ID $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllLiveSessions(
+        filters: LiveSessionFilters?,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        filters?.status?.let { eq("status", it.name.lowercase()) }
+                        filters?.subject?.let { eq("subject", it) }
+                        filters?.teacherId?.let { eq("teacher_id", it) }
+                        filters?.isPublic?.let { eq("is_public", it) }
+                        filters?.minPrice?.let { gte("price", it) }
+                        filters?.maxPrice?.let { lte("price", it) }
+                       // filters?.searchQuery?.let { or("title.ilike.%$it%,description.ilike.%$it%") }
+                        filters?.dateFrom?.let { gte("scheduled_start", it) }
+                        filters?.dateTo?.let { lte("scheduled_start", it) }
+                        filters?.gradeLevel?.let { eq("grade_level", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order(filters?.sortBy ?: "scheduled_start",
+                        if (filters?.sortOrder == "asc") Order.ASCENDING else Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODAS AS LIVE SESSIONS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveSessionsByTeacher(
+        teacherId: String,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("teacher_id", teacherId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES DO PROFESSOR $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getUpcomingLiveSessions(page: Int, pageSize: Int): List<LiveSessionModel> {
+        return try {
+            val now = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("status", "scheduled")
+                        gte("scheduled_start", now)
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.ASCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES AGENDADAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveNowSessions(): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", "live") }
+                    order("actual_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES AO VIVO: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getPastLiveSessions(page: Int, pageSize: Int): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", "ended") }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("actual_end", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES PASSADAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getUserLiveSessions(
+        userId: String,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            // Query lives where user is a participant
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        // Usando inner join com live_participants
+                       // or("teacher_id.eq.$userId")
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES DO USUÁRIO $userId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveSessionsByStatus(
+        status: LiveStatus,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", status.name.lowercase()) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES POR STATUS $status: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveSessionsBySubject(
+        subject: String,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("subject", subject) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES POR DISCIPLINA $subject: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getRecentLiveSessions(limit: Int): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    limit(limit.toLong())
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES RECENTES: ${e.message}")
+            throw e
+        }
+    }
+
+    // ==================== UPDATE ====================
+
+    override suspend fun updateLiveSession(
+        sessionId: String,
+        request: UpdateLiveSessionRequest
+    ): LiveSessionModel {
+        return try {
+            val updates = buildMap {
+                request.title?.let { put("title", it) }
+                request.description?.let { put("description", it) }
+                request.subject?.let { put("subject", it) }
+                request.scheduledStart?.let { put("scheduled_start", it) }
+                request.durationMinutes?.let { put("duration_minutes", it) }
+                request.maxParticipants?.let { put("max_participants", it) }
+                request.isPublic?.let { put("is_public", it) }
+                request.status?.let { put("status", it.name.lowercase()) }
+                put("updated_at", Clock.System.todayIn(TimeZone.currentSystemDefault()).toString())
+            }
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun startLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "live",
+                "actual_start" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString(),
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO INICIAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun pauseLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "paused",
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PAUSAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun resumeLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "live",
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO RETOMAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun endLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "ended",
+                "actual_end" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString(),
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO FINALIZAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun cancelLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "cancelled",
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CANCELAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateLiveMetrics(
+        sessionId: String,
+        participantCount: Int,
+        viewCount: Int
+    ): Boolean {
+        return try {
+            val updates = mapOf(
+                "participant_count" to participantCount,
+                "view_count" to viewCount,
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                }
+            true
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR MÉTRICAS DA LIVE $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun incrementParticipantCount(sessionId: String): Boolean {
+        return try {
+            // RPC call or fetch + increment + update
+            val current = getLiveSessionById(sessionId)
+            current?.let {
+                val updates = mapOf(
+                    "participant_count" to (it.participantCount + 1),
+                    "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+                )
+                client.postgrest[schema, table]
+                    .update(updates) {
+                        filter { eq("id", sessionId) }
+                    }
+                true
+            } ?: false
+        } catch (e: Exception) {
+            println("ERRO AO INCREMENTAR PARTICIPANTES DA LIVE $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun decrementParticipantCount(sessionId: String): Boolean {
+        return try {
+            val current = getLiveSessionById(sessionId)
+            current?.let {
+                val newCount = maxOf(0, it.participantCount - 1)
+                val updates = mapOf(
+                    "participant_count" to newCount,
+                    "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+                )
+                client.postgrest[schema, table]
+                    .update(updates) {
+                        filter { eq("id", sessionId) }
+                    }
+                true
+            } ?: false
+        } catch (e: Exception) {
+            println("ERRO AO DECREMENTAR PARTICIPANTES DA LIVE $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    // ==================== DELETE ====================
+
+    override suspend fun deleteLiveSession(sessionId: String): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", sessionId) }
+                }
+            true
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR LIVE SESSION $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteCancelledSessions(olderThanDays: Int): Int {
+        return try {
+            val threshold = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            client.postgrest[schema, table]
+                .delete {
+                    filter {
+                        eq("status", "cancelled")
+                        lt("created_at", threshold)
+                    }
+                }
+            // Supabase delete não retorna count, usar RPC se precisar
+            0
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR LIVES CANCELADAS ANTIGAS: ${e.message}")
+            0
+        }
+    }
+
+    // ==================== STREAMING ====================
+
+    override suspend fun getStreamInfo(sessionId: String): StreamInfoResponse {
+        return try {
+            val session = getLiveSessionById(sessionId)
+            session?.let {
+                StreamInfoResponse(
+                    success = true,
+                    liveSession = it,
+                    streamInfo = StreamInfo(
+                        rtmpUrl = it.rtmpUrl ?: "",
+                        streamKey = it.streamKey ?: "",
+                        playbackUrl = it.playbackUrl ?: ""
+                    )
+                )
+            } ?: StreamInfoResponse(
+                success = false,
+                liveSession = LiveSessionModel(),
+                error = "Session not found"
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER STREAM INFO $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun generateStreamKey(sessionId: String): String {
+        return try {
+            val streamKey = UUID.randomUUID().toString()
+            val updates = mapOf(
+                "stream_key" to streamKey,
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                }
+            streamKey
+        } catch (e: Exception) {
+            println("ERRO AO GERAR STREAM KEY $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    // ==================== STATISTICS ====================
+
+    override suspend fun countLivesByStatus(status: LiveStatus): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("status", status.name.lowercase()) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR LIVES POR STATUS $status: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countTeacherLives(teacherId: String, status: LiveStatus?): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        status?.let { eq("status", it.name.lowercase()) }
+                    }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR LIVES DO PROFESSOR $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveStatistics(teacherId: String?, days: Int): Map<String, Any> {
+        return try {
+            // Placeholder - usar RPC para estatísticas complexas
+            mapOf(
+                "total_lives" to 0,
+                "total_viewers" to 0,
+                "average_viewers" to 0.0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER ESTATÍSTICAS DE LIVES: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    // ==================== REALTIME ====================
+
+    override fun observeLiveSession(sessionId: String): Flow<LiveSessionModel> {
+        return client.channel("live_session_$sessionId")
+            .postgresChangeFlow(schema = schema) {
+                table = this@LiveSessionDataSourceImpl.table
+                filter = "id=eq.$sessionId"
+            }
+            .map { action ->
+                when (action) {
+                    is PostgresAction.Update -> action.decodeRecord<LiveSessionModel>()
+                    is PostgresAction.Insert -> action.decodeRecord<LiveSessionModel>()
+                    else -> LiveSessionModel()
+                }
+            }
+    }
+
+    override fun observeLiveNowSessions(): Flow<List<LiveSessionModel>> {
+        return client.channel("live_now_sessions")
+            .postgresChangeFlow(schema = schema) {
+                table = this@LiveSessionDataSourceImpl.table
+                filter = "status=eq.live"
+            }
+            .map {
+                // Fetch all live sessions on change
+                getLiveNowSessions()
+            }
+    }
+}
+ */
+
+
+class LiveSessionDataSourceImpl : LiveSessionDataSource {
+
+    private val client = TshikasiAutoSchool.supabase
+    private val schema = "db_auto_school"
+    private val table = "live_sessions"
+
+    // ==================== CREATE ====================
+
+    override suspend fun createLiveSession(request: CreateLiveSessionRequest): LiveSessionModel {
+        return try {
+            val session = LiveSessionModel(
+                id = UUID.randomUUID().toString(),
+                title = request.title,
+                description = request.description,
+                subject = request.subject,
+                scheduledStart = request.scheduledStart,
+                durationMinutes = request.durationMinutes,
+                maxParticipants = request.maxParticipants,
+                isPublic = request.isPublic,
+                requiresApproval = request.requiresApproval,
+                price = request.price,
+                status = LiveStatus.SCHEDULED,
+                createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .insert(session) {
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CRIAR LIVE SESSION: ${e.message}")
+            throw e
+        }
+    }
+
+    // ==================== READ ====================
+
+    override suspend fun getLiveSessionById(sessionId: String): LiveSessionModel? {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("id", sessionId) }
+                }
+                .decodeList<LiveSessionModel>()
+                .firstOrNull()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVE SESSION POR ID $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getAllLiveSessions(
+        filters: LiveSessionFilters?,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        filters?.status?.let { eq("status", it.name.lowercase()) }
+                        filters?.subject?.let { eq("subject", it) }
+                        filters?.teacherId?.let { eq("teacher_id", it) }
+                        filters?.isPublic?.let { eq("is_public", it) }
+                        filters?.minPrice?.let { gte("price", it) }
+                        filters?.maxPrice?.let { lte("price", it) }
+                       // filters?.searchQuery?.let { or("title.ilike.%$it%,description.ilike.%$it%")  }
+                        filters?.dateFrom?.let { gte("scheduled_start", it) }
+                        filters?.dateTo?.let { lte("scheduled_start", it) }
+                        filters?.gradeLevel?.let { eq("grade_level", it) }
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order(filters?.sortBy ?: "scheduled_start",
+                        if (filters?.sortOrder == "asc") Order.ASCENDING else Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR TODAS AS LIVE SESSIONS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveSessionsByTeacher(
+        teacherId: String,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("teacher_id", teacherId) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES DO PROFESSOR $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getUpcomingLiveSessions(page: Int, pageSize: Int): List<LiveSessionModel> {
+        return try {
+            val now = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        eq("status", "scheduled")
+                        gte("scheduled_start", now)
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.ASCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES AGENDADAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveNowSessions(): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", "live") }
+                    order("actual_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES AO VIVO: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getPastLiveSessions(page: Int, pageSize: Int): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", "ended") }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("actual_end", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES PASSADAS: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getUserLiveSessions(
+        userId: String,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            // Query lives where user is a participant
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter {
+                        // Usando inner join com live_participants
+                        //or("teacher_id.eq.$userId")
+                    }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES DO USUÁRIO $userId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveSessionsByStatus(
+        status: LiveStatus,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("status", status.name.lowercase()) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES POR STATUS $status: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveSessionsBySubject(
+        subject: String,
+        page: Int,
+        pageSize: Int
+    ): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    filter { eq("subject", subject) }
+                    range((page * pageSize).toLong(), ((page + 1) * pageSize - 1).toLong())
+                    order("scheduled_start", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES POR DISCIPLINA $subject: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getRecentLiveSessions(limit: Int): List<LiveSessionModel> {
+        return try {
+            client.postgrest[schema, table]
+                .select(Columns.ALL) {
+                    limit(limit.toLong())
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO BUSCAR LIVES RECENTES: ${e.message}")
+            throw e
+        }
+    }
+
+    // ==================== UPDATE ====================
+
+    override suspend fun updateLiveSession(
+        sessionId: String,
+        request: UpdateLiveSessionRequest
+    ): LiveSessionModel {
+        return try {
+            val updates = buildMap {
+                request.title?.let { put("title", it) }
+                request.description?.let { put("description", it) }
+                request.subject?.let { put("subject", it) }
+                request.scheduledStart?.let { put("scheduled_start", it) }
+                request.durationMinutes?.let { put("duration_minutes", it) }
+                request.maxParticipants?.let { put("max_participants", it) }
+                request.isPublic?.let { put("is_public", it) }
+                request.status?.let { put("status", it.name.lowercase()) }
+                put("updated_at", Clock.System.todayIn(TimeZone.currentSystemDefault()).toString())
+            }
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun startLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "live",
+                "actual_start" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString(),
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO INICIAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun pauseLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "paused",
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO PAUSAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun resumeLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "live",
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO RETOMAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun endLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "ended",
+                "actual_end" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString(),
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO FINALIZAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun cancelLiveSession(sessionId: String): LiveSessionModel {
+        return try {
+            val updates = mapOf(
+                "status" to "cancelled",
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                    select(Columns.ALL)
+                }
+                .decodeSingle<LiveSessionModel>()
+        } catch (e: Exception) {
+            println("ERRO AO CANCELAR LIVE SESSION $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun updateLiveMetrics(
+        sessionId: String,
+        participantCount: Int,
+        viewCount: Int
+    ): Boolean {
+        return try {
+            val updates = mapOf(
+                "participant_count" to participantCount,
+                "view_count" to viewCount,
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                }
+            true
+        } catch (e: Exception) {
+            println("ERRO AO ATUALIZAR MÉTRICAS DA LIVE $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun incrementParticipantCount(sessionId: String): Boolean {
+        return try {
+            // RPC call or fetch + increment + update
+            val current = getLiveSessionById(sessionId)
+            current?.let {
+                val updates = mapOf(
+                    "participant_count" to (it.participantCount + 1),
+                    "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+                )
+                client.postgrest[schema, table]
+                    .update(updates) {
+                        filter { eq("id", sessionId) }
+                    }
+                true
+            } ?: false
+        } catch (e: Exception) {
+            println("ERRO AO INCREMENTAR PARTICIPANTES DA LIVE $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun decrementParticipantCount(sessionId: String): Boolean {
+        return try {
+            val current = getLiveSessionById(sessionId)
+            current?.let {
+                val newCount = maxOf(0, it.participantCount - 1)
+                val updates = mapOf(
+                    "participant_count" to newCount,
+                    "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+                )
+                client.postgrest[schema, table]
+                    .update(updates) {
+                        filter { eq("id", sessionId) }
+                    }
+                true
+            } ?: false
+        } catch (e: Exception) {
+            println("ERRO AO DECREMENTAR PARTICIPANTES DA LIVE $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    // ==================== DELETE ====================
+
+    override suspend fun deleteLiveSession(sessionId: String): Boolean {
+        return try {
+            client.postgrest[schema, table]
+                .delete {
+                    filter { eq("id", sessionId) }
+                }
+            true
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR LIVE SESSION $sessionId: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun deleteCancelledSessions(olderThanDays: Int): Int {
+        return try {
+            val threshold = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            client.postgrest[schema, table]
+                .delete {
+                    filter {
+                        eq("status", "cancelled")
+                        lt("created_at", threshold)
+                    }
+                }
+            // Supabase delete não retorna count, usar RPC se precisar
+            0
+        } catch (e: Exception) {
+            println("ERRO AO DELETAR LIVES CANCELADAS ANTIGAS: ${e.message}")
+            0
+        }
+    }
+
+    // ==================== STREAMING ====================
+
+    override suspend fun getStreamInfo(sessionId: String): StreamInfoResponse {
+        return try {
+            val session = getLiveSessionById(sessionId)
+            session?.let {
+                StreamInfoResponse(
+                    success = true,
+                    liveSession = it,
+                    streamInfo = StreamInfo(
+                        rtmpUrl = it.rtmpUrl ?: "",
+                        streamKey = it.streamKey ?: "",
+                        playbackUrl = it.playbackUrl ?: ""
+                    )
+                )
+            } ?: StreamInfoResponse(
+                success = false,
+                liveSession = LiveSessionModel(),
+                error = "Session not found"
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER STREAM INFO $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun generateStreamKey(sessionId: String): String {
+        return try {
+            val streamKey = UUID.randomUUID().toString()
+            val updates = mapOf(
+                "stream_key" to streamKey,
+                "updated_at" to Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            )
+
+            client.postgrest[schema, table]
+                .update(updates) {
+                    filter { eq("id", sessionId) }
+                }
+            streamKey
+        } catch (e: Exception) {
+            println("ERRO AO GERAR STREAM KEY $sessionId: ${e.message}")
+            throw e
+        }
+    }
+
+    // ==================== STATISTICS ====================
+
+    override suspend fun countLivesByStatus(status: LiveStatus): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter { eq("status", status.name.lowercase()) }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR LIVES POR STATUS $status: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun countTeacherLives(teacherId: String, status: LiveStatus?): Int {
+        return try {
+            val response = client.postgrest[schema, table]
+                .select(columns = Columns.raw("count(*)")) {
+                    filter {
+                        eq("teacher_id", teacherId)
+                        status?.let { eq("status", it.name.lowercase()) }
+                    }
+                }
+                .decodeList<Map<String, Long>>()
+
+            response.firstOrNull()?.get("count")?.toInt() ?: 0
+        } catch (e: Exception) {
+            println("ERRO AO CONTAR LIVES DO PROFESSOR $teacherId: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getLiveStatistics(teacherId: String?, days: Int): Map<String, Any> {
+        return try {
+            // Placeholder - usar RPC para estatísticas complexas
+            mapOf(
+                "total_lives" to 0,
+                "total_viewers" to 0,
+                "average_viewers" to 0.0
+            )
+        } catch (e: Exception) {
+            println("ERRO AO OBTER ESTATÍSTICAS DE LIVES: ${e.message}")
+            emptyMap()
+        }
+    }
+
+    // ==================== REALTIME ====================
+    override fun observeLiveSession(sessionId: String): Flow<LiveSessionModel> {
+        return client.channel("live_session_$sessionId")
+            .postgresChangeFlow<PostgresAction>(schema = schema) {
+                table = this@LiveSessionDataSourceImpl.table
+                filter = "id=eq.$sessionId"
+            }
+            .mapNotNull { action ->
+                when (action) {
+                    is PostgresAction.Update -> action.decodeRecord<LiveSessionModel>()
+                    is PostgresAction.Insert -> action.decodeRecord<LiveSessionModel>()
+                    else -> null
+                }
+            }
+    }
+
+    override fun observeLiveNowSessions(): Flow<List<LiveSessionModel>> {
+        return client.channel("live_now_sessions")
+            .postgresChangeFlow<PostgresAction>(schema = schema) {
+                table = this@LiveSessionDataSourceImpl.table
+                filter = "status=eq.live"
+            }
+            .mapLatest {
+                // Fetch all live sessions on change
+                getLiveNowSessions()
+            }
     }
 }

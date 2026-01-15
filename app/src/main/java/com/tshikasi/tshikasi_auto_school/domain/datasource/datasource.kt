@@ -2,7 +2,9 @@ package com.tshikasi.tshikasi_auto_school.domain.datasource
 
 import arrow.core.Either
 import com.tshikasi.tshikasi_auto_school.domain.model.*
+import com.tshikasi.tshikasi_auto_school.domain.repository.TeacherLiveStats
 import com.tshikasi.tshikasi_auto_school.utils.NetworkError
+import kotlinx.coroutines.flow.Flow
 
 // ============================================
 // INTERFACE: AssignmentDataSource
@@ -1041,5 +1043,900 @@ interface UserSessionDataSource {
     suspend fun getSessionActivity(userId: Long, userType: String, days: Int = 30): Map<String, Any>
 }
 
+
+
+
+// ==================== LIVE SESSION DATASOURCE ====================
+
+/**
+ * DataSource para gerenciar sessões de lives
+ */
+interface LiveSessionDataSource {
+
+    // ==================== CREATE ====================
+
+    /**
+     * Criar uma nova sessão de live
+     */
+    suspend fun createLiveSession(request: CreateLiveSessionRequest):  LiveSessionModel
+
+    // ==================== READ ====================
+
+    /**
+     * Buscar live por ID
+     */
+    suspend fun getLiveSessionById(sessionId: String):  LiveSessionModel?
+
+    /**
+     * Buscar todas as lives (com filtros opcionais)
+     */
+    suspend fun getAllLiveSessions(
+        filters: LiveSessionFilters? = null,
+        page: Int = 1,
+        pageSize: Int = 20
+    ):  List<LiveSessionModel>
+
+    /**
+     * Buscar lives do professor
+     */
+    suspend fun getLiveSessionsByTeacher(
+        teacherId: String,
+        page: Int = 1,
+        pageSize: Int = 20
+    ):  List<LiveSessionModel>
+
+    /**
+     * Buscar lives agendadas (upcoming)
+     */
+    suspend fun getUpcomingLiveSessions(
+        page: Int = 1,
+        pageSize: Int = 20
+    ):  List<LiveSessionModel>
+
+    /**
+     * Buscar lives ao vivo agora
+     */
+    suspend fun getLiveNowSessions():  List<LiveSessionModel>
+
+    /**
+     * Buscar lives passadas (histórico)
+     */
+    suspend fun getPastLiveSessions(
+        page: Int = 1,
+        pageSize: Int = 20
+    ): List<LiveSessionModel>
+
+    /**
+     * Buscar lives que o usuário participa
+     */
+    suspend fun getUserLiveSessions(
+        userId: String,
+        page: Int = 1,
+        pageSize: Int = 20
+    ): List<LiveSessionModel>
+
+    /**
+     * Buscar lives por status
+     */
+    suspend fun getLiveSessionsByStatus(
+        status: LiveStatus,
+        page: Int = 1,
+        pageSize: Int = 20
+    ): List<LiveSessionModel>
+
+    /**
+     * Buscar lives por disciplina
+     */
+    suspend fun getLiveSessionsBySubject(
+        subject: String,
+        page: Int = 1,
+        pageSize: Int = 20
+    ): List<LiveSessionModel>
+
+    /**
+     * Buscar lives recentes
+     */
+    suspend fun getRecentLiveSessions(limit: Int = 10):  List<LiveSessionModel>
+
+    // ==================== UPDATE ====================
+
+    /**
+     * Atualizar sessão de live
+     */
+    suspend fun updateLiveSession(
+        sessionId: String,
+        request: UpdateLiveSessionRequest
+    ): LiveSessionModel
+
+    /**
+     * Iniciar live (mudar status para LIVE)
+     */
+    suspend fun startLiveSession(sessionId: String):  LiveSessionModel
+
+    /**
+     * Pausar live
+     */
+    suspend fun pauseLiveSession(sessionId: String):  LiveSessionModel
+
+    /**
+     * Retomar live pausada
+     */
+    suspend fun resumeLiveSession(sessionId: String):  LiveSessionModel
+
+    /**
+     * Finalizar live (mudar status para ENDED)
+     */
+    suspend fun endLiveSession(sessionId: String):  LiveSessionModel
+
+    /**
+     * Cancelar live
+     */
+    suspend fun cancelLiveSession(sessionId: String): LiveSessionModel
+
+    /**
+     * Atualizar métricas da live (viewers, views)
+     */
+    suspend fun updateLiveMetrics(
+        sessionId: String,
+        participantCount: Int,
+        viewCount: Int
+    ):  Boolean
+
+    /**
+     * Incrementar contador de participantes
+     */
+    suspend fun incrementParticipantCount(sessionId: String):  Boolean
+
+    /**
+     * Decrementar contador de participantes
+     */
+    suspend fun decrementParticipantCount(sessionId: String):  Boolean
+
+    // ==================== DELETE ====================
+
+    /**
+     * Deletar sessão de live
+     */
+    suspend fun deleteLiveSession(sessionId: String):  Boolean
+
+    /**
+     * Deletar lives canceladas antigas
+     */
+    suspend fun deleteCancelledSessions(olderThanDays: Int = 30):  Int
+
+    // ==================== STREAMING ====================
+
+    /**
+     * Obter informações de streaming (RTMP, playback URL, etc)
+     */
+    suspend fun getStreamInfo(sessionId: String): StreamInfoResponse
+
+    /**
+     * Gerar novo stream key
+     */
+    suspend fun generateStreamKey(sessionId: String):  String
+
+    // ==================== STATISTICS ====================
+
+    /**
+     * Contar lives por status
+     */
+    suspend fun countLivesByStatus(status: LiveStatus):  Int
+
+    /**
+     * Contar lives do professor
+     */
+    suspend fun countTeacherLives(
+        teacherId: String,
+        status: LiveStatus? = null
+    ): Int
+
+    /**
+     * Obter estatísticas gerais das lives
+     */
+    suspend fun getLiveStatistics(
+        teacherId: String? = null,
+        days: Int = 30
+    ):  Map<String, Any>
+
+    // ==================== REALTIME ====================
+
+    /**
+     * Observar mudanças em uma live específica (Realtime)
+     */
+    fun observeLiveSession(sessionId: String):  Flow<LiveSessionModel>
+
+    /**
+     * Observar todas as lives ao vivo agora (Realtime)
+     */
+    fun observeLiveNowSessions():  Flow<List<LiveSessionModel>>
+}
+
+// ==================== LIVE PARTICIPANT DATASOURCE ====================
+
+/**
+ * DataSource para gerenciar participantes das lives
+ */
+interface LiveParticipantDataSource {
+
+    // ==================== CREATE ====================
+
+    /**
+     * Entrar em uma live
+     */
+    suspend fun joinLiveSession(request: JoinLiveSessionRequest):  LiveParticipantModel
+
+    // ==================== READ ====================
+
+    /**
+     * Buscar participantes de uma live
+     */
+    suspend fun getParticipants(
+        sessionId: String,
+        page: Int = 1,
+        pageSize: Int = 100
+    ):  List<LiveParticipantModel>
+
+    /**
+     * Buscar participante específico
+     */
+    suspend fun getParticipant(
+        sessionId: String,
+        userId: String
+    ): LiveParticipantModel?
+
+    /**
+     * Buscar participantes por papel
+     */
+    suspend fun getParticipantsByRole(
+        sessionId: String,
+        role: ParticipantRole
+    ): List<LiveParticipantModel>
+
+    /**
+     * Buscar participantes online
+     */
+    suspend fun getOnlineParticipants(sessionId: String): List<LiveParticipantModel>
+
+    /**
+     * Buscar participantes pendentes de aprovação
+     */
+    suspend fun getPendingApprovals(sessionId: String): List<LiveParticipantModel>
+
+    /**
+     * Buscar histórico de participações do usuário
+     */
+    suspend fun getUserParticipationHistory(
+        userId: String,
+        page: Int = 1,
+        pageSize: Int = 20
+    ): List<LiveParticipantModel>
+
+    // ==================== UPDATE ====================
+
+    /**
+     * Sair de uma live
+     */
+    suspend fun leaveLiveSession(
+        sessionId: String,
+        userId: String
+    ): Boolean
+
+    /**
+     * Atualizar papel do participante (promover/rebaixar)
+     */
+    suspend fun updateParticipantRole(
+        participantId: String,
+        newRole: ParticipantRole
+    ): LiveParticipantModel
+
+    /**
+     * Aprovar participante (quando requires_approval = true)
+     */
+    suspend fun approveParticipant(participantId: String): LiveParticipantModel
+
+    /**
+     * Rejeitar participante
+     */
+    suspend fun rejectParticipant(participantId: String): Boolean
+
+    // ==================== DELETE ====================
+
+    /**
+     * Remover participante da live
+     */
+    suspend fun removeParticipant(participantId: String):  Boolean
+
+    /**
+     * Limpar participantes offline antigos
+     */
+    suspend fun cleanupOfflineParticipants(sessionId: String): Int
+
+    // ==================== STATISTICS ====================
+
+    /**
+     * Contar participantes da live
+     */
+    suspend fun countParticipants(sessionId: String, onlineOnly: Boolean = false): Int
+
+    /**
+     * Contar participações do usuário
+     */
+    suspend fun countUserParticipations(userId: String):  Int
+
+    /**
+     * Verificar se usuário está na live
+     */
+    suspend fun isUserInLive(
+        sessionId: String,
+        userId: String
+    ): Boolean
+
+    // ==================== REALTIME ====================
+
+    /**
+     * Observar participantes em tempo real
+     */
+    fun observeParticipants(sessionId: String):  Flow<List<LiveParticipantModel>>
+
+    /**
+     * Observar contador de participantes online
+     */
+    fun observeOnlineCount(sessionId: String):  Flow<Int>
+}
+
+// ==================== LIVE CHAT DATASOURCE ====================
+
+/**
+ * DataSource para gerenciar chat das lives
+ */
+interface LiveChatDataSource  {
+
+    // ==================== CREATE ====================
+
+    /**
+     * Enviar mensagem no chat
+     */
+    suspend fun sendMessage(request: SendChatMessageRequest):  LiveChatMessageModel
+
+    // ==================== READ ====================
+
+    /**
+     * Buscar mensagens do chat
+     */
+    suspend fun getMessages(
+        sessionId: String,
+        limit: Int = 100,
+        offset: Int = 0
+    ):  List<LiveChatMessageModel>
+
+    /**
+     * Buscar mensagens recentes
+     */
+    suspend fun getRecentMessages(
+        sessionId: String,
+        limit: Int = 50
+    ):  List<LiveChatMessageModel>
+
+    /**
+     * Buscar mensagens por tipo
+     */
+    suspend fun getMessagesByType(
+        sessionId: String,
+        messageType: ChatMessageType,
+        limit: Int = 100
+    ): List<LiveChatMessageModel>
+
+    /**
+     * Buscar perguntas não respondidas
+     */
+    suspend fun getUnansweredQuestions(sessionId: String):  List<LiveChatMessageModel>
+
+    /**
+     * Buscar mensagens do usuário
+     */
+    suspend fun getUserMessages(
+        sessionId: String,
+        userId: String
+    ):  List<LiveChatMessageModel>
+
+    /**
+     * Buscar mensagens pendentes de aprovação
+     */
+    suspend fun getPendingMessages(sessionId: String): List<LiveChatMessageModel>
+
+    // ==================== UPDATE ====================
+
+    /**
+     * Aprovar mensagem (quando chat_moderated = true)
+     */
+    suspend fun approveMessage(messageId: String): LiveChatMessageModel
+
+    /**
+     * Fixar mensagem importante
+     */
+    suspend fun pinMessage(messageId: String):  LiveChatMessageModel
+
+    /**
+     * Despintar mensagem
+     */
+    suspend fun unpinMessage(messageId: String):  Boolean
+
+    // ==================== DELETE ====================
+
+    /**
+     * Deletar mensagem
+     */
+    suspend fun deleteMessage(messageId: String):  Boolean
+
+    /**
+     * Deletar todas as mensagens do usuário
+     */
+    suspend fun deleteUserMessages(
+        sessionId: String,
+        userId: String
+    ):  Int
+
+    /**
+     * Limpar mensagens antigas
+     */
+    suspend fun clearOldMessages(
+        sessionId: String,
+        olderThanMinutes: Int = 60
+    ): Int
+
+    // ==================== STATISTICS ====================
+
+    /**
+     * Contar mensagens da live
+     */
+    suspend fun countMessages(sessionId: String): Int
+
+    /**
+     * Contar mensagens do usuário
+     */
+    suspend fun countUserMessages(
+        sessionId: String,
+        userId: String
+    ):  Int
+
+    /**
+     * Contar mensagens por tipo
+     */
+    suspend fun countMessagesByType(sessionId: String):  Map<ChatMessageType, Int>
+
+    // ==================== REALTIME ====================
+
+    /**
+     * Observar mensagens em tempo real
+     */
+    fun observeMessages(sessionId: String):  Flow<LiveChatMessageModel>
+}
+
+// ==================== LIVE REACTION DATASOURCE ====================
+
+/**
+ * DataSource para gerenciar reações nas lives
+ */
+interface LiveReactionDataSource  {
+
+    // ==================== CREATE ====================
+
+    /**
+     * Enviar reação (emoji)
+     */
+    suspend fun sendReaction(
+        sessionId: String,
+        userId: String,
+        emoji: String
+    ): LiveReactionModel
+
+    // ==================== READ ====================
+
+    /**
+     * Buscar reações da live
+     */
+    suspend fun getReactions(
+        sessionId: String,
+        limit: Int = 50
+    ):  List<LiveReactionModel>
+
+    /**
+     * Buscar reações recentes
+     */
+    suspend fun getRecentReactions(
+        sessionId: String,
+        seconds: Int = 5
+    ):  List<LiveReactionModel>
+
+    // ==================== DELETE ====================
+
+    /**
+     * Limpar reações antigas (> 5 segundos)
+     */
+    suspend fun clearOldReactions(
+        sessionId: String,
+        olderThanSeconds: Int = 5
+    ): Int
+
+    // ==================== STATISTICS ====================
+
+    /**
+     * Contar reações por tipo
+     */
+    suspend fun countReactionsByType(sessionId: String):  Map<String, Int>
+
+    /**
+     * Contar total de reações
+     */
+    suspend fun countTotalReactions(sessionId: String):  Int
+
+    // ==================== REALTIME ====================
+
+    /**
+     * Observar reações em tempo real
+     */
+    fun observeReactions(sessionId: String): Flow<LiveReactionModel>
+}
+
+// ==================== LIVE POLL DATASOURCE ====================
+
+/**
+ * DataSource para gerenciar enquetes nas lives
+ */
+interface LivePollDataSource {
+
+    // ==================== CREATE ====================
+
+    /**
+     * Criar enquete
+     */
+    suspend fun createPoll(
+        sessionId: String,
+        question: String,
+        options: List<String>,
+        durationSeconds: Int? = null
+    ):  LivePollModel
+
+    /**
+     * Votar em enquete
+     */
+    suspend fun votePoll(
+        pollId: String,
+        optionId: String,
+        userId: String
+    ): PollVoteModel
+
+    // ==================== READ ====================
+
+    /**
+     * Buscar enquetes da live
+     */
+    suspend fun getPolls(sessionId: String): List<LivePollModel>
+
+    /**
+     * Buscar enquete por ID
+     */
+    suspend fun getPollById(pollId: String): LivePollModel?
+
+    /**
+     * Buscar enquetes ativas
+     */
+    suspend fun getActivePolls(sessionId: String):  List<LivePollModel>
+
+    /**
+     * Buscar votos de uma enquete
+     */
+    suspend fun getPollVotes(pollId: String): List<PollVoteModel>
+
+    /**
+     * Verificar se usuário já votou
+     */
+    suspend fun hasUserVoted(
+        pollId: String,
+        userId: String
+    ):  Boolean
+
+    // ==================== UPDATE ====================
+
+    /**
+     * Fechar enquete
+     */
+    suspend fun closePoll(pollId: String):  LivePollModel
+
+    // ==================== DELETE ====================
+
+    /**
+     * Deletar enquete
+     */
+    suspend fun deletePoll(pollId: String):  Boolean
+
+    // ==================== STATISTICS ====================
+
+    /**
+     * Contar votos totais da enquete
+     */
+    suspend fun countPollVotes(pollId: String):  Int
+
+    /**
+     * Obter resultados da enquete
+     */
+    suspend fun getPollResults(pollId: String): Map<String, Int>
+
+    // ==================== REALTIME ====================
+
+    /**
+     * Observar resultados da enquete em tempo real
+     */
+    fun observePollResults(pollId: String):  Flow<LivePollModel>
+}
+
+// ==================== LIVE STATS DATASOURCE ====================
+
+/**
+ * DataSource para estatísticas das lives
+ */
+interface LiveStatsDataSource  {
+
+    // ==================== CREATE/UPDATE ====================
+
+    /**
+     * Criar estatísticas iniciais
+     */
+    suspend fun createLiveStats(sessionId: String):  LiveStreamStats
+
+    /**
+     * Atualizar estatísticas
+     */
+    suspend fun updateLiveStats(stats: LiveStreamStats): LiveStreamStats
+
+    /**
+     * Registrar visualização (incrementar view_count)
+     */
+    suspend fun recordView(sessionId: String, userId: String):  Boolean
+
+    /**
+     * Registrar tempo de visualização
+     */
+    suspend fun recordWatchTime(
+        sessionId: String,
+        userId: String,
+        seconds: Int
+    ): Boolean
+
+    /**
+     * Incrementar contador de mensagens
+     */
+    suspend fun incrementMessageCount(sessionId: String):  Boolean
+
+    /**
+     * Incrementar contador de reações
+     */
+    suspend fun incrementReactionCount(sessionId: String):  Boolean
+
+    /**
+     * Atualizar pico de espectadores
+     */
+    suspend fun updatePeakViewers(sessionId: String, viewers: Int):  Boolean
+
+    // ==================== READ ====================
+
+    /**
+     * Buscar estatísticas da live
+     */
+    suspend fun getLiveStats(sessionId: String): LiveStreamStats?
+
+    /**
+     * Buscar estatísticas do professor (todas as lives)
+     */
+    suspend fun getTeacherStats(teacherId: String):  TeacherLiveStats
+
+    /**
+     * Buscar estatísticas por período
+     */
+    suspend fun getStatsByPeriod(
+        teacherId: String,
+        startDate: String,
+        endDate: String
+    ): Map<String, Any>
+
+    // ==================== STATISTICS ====================
+
+    /**
+     * Calcular média de espectadores
+     */
+    suspend fun calculateAverageViewers(sessionId: String):  Double
+
+    /**
+     * Calcular taxa de retenção
+     */
+    suspend fun calculateRetentionRate(sessionId: String): Double
+
+    /**
+     * Calcular taxa de engajamento
+     */
+    suspend fun calculateEngagementRate(sessionId: String):  Double
+
+    // ==================== REALTIME ====================
+
+    /**
+     * Observar estatísticas em tempo real
+     */
+    fun observeLiveStats(sessionId: String): Flow<LiveStreamStats>
+}
+
+// ==================== LIVE RECORDING DATASOURCE ====================
+
+/**
+ * DataSource para gravações das lives
+ */
+interface LiveRecordingDataSource  {
+
+    // ==================== CREATE ====================
+
+    /**
+     * Iniciar gravação
+     */
+    suspend fun startRecording(sessionId: String):  LiveRecordingModel
+
+    // ==================== READ ====================
+
+    /**
+     * Buscar gravação por ID
+     */
+    suspend fun getRecordingById(recordingId: String): LiveRecordingModel?
+
+    /**
+     * Buscar gravações de uma live
+     */
+    suspend fun getRecordingsBySession(sessionId: String):  List<LiveRecordingModel>
+
+    /**
+     * Buscar gravações do professor
+     */
+    suspend fun getRecordingsByTeacher(
+        teacherId: String,
+        page: Int = 1,
+        pageSize: Int = 20
+    ): List<LiveRecordingModel>
+
+    /**
+     * Buscar gravações públicas
+     */
+    suspend fun getPublicRecordings(
+        page: Int = 1,
+        pageSize: Int = 20
+    ): List<LiveRecordingModel>
+
+    /**
+     * Buscar gravações recentes
+     */
+    suspend fun getRecentRecordings(limit: Int = 10):  List<LiveRecordingModel>
+
+    // ==================== UPDATE ====================
+
+    /**
+     * Parar gravação
+     */
+    suspend fun stopRecording(recordingId: String): LiveRecordingModel
+
+    /**
+     * Tornar gravação pública/privada
+     */
+    suspend fun updateRecordingVisibility(
+        recordingId: String,
+        isPublic: Boolean
+    ):  LiveRecordingModel
+
+    /**
+     * Atualizar status de processamento
+     */
+    suspend fun updateProcessingStatus(
+        recordingId: String,
+        isProcessing: Boolean
+    ): LiveRecordingModel
+
+    // ==================== DELETE ====================
+
+    /**
+     * Deletar gravação
+     */
+    suspend fun deleteRecording(recordingId: String): Boolean
+
+    // ==================== STATISTICS ====================
+
+    /**
+     * Contar gravações do professor
+     */
+    suspend fun countTeacherRecordings(teacherId: String):  Int
+
+    /**
+     * Obter tamanho total das gravações
+     */
+    suspend fun getTotalRecordingSize(teacherId: String):  Double
+}
+
+// ==================== LIVE NOTIFICATION DATASOURCE ====================
+
+/**
+ * DataSource para notificações de lives
+ */
+interface LiveNotificationDataSource  {
+
+    // ==================== CREATE ====================
+
+    /**
+     * Criar notificação
+     */
+    suspend fun createNotification(
+        sessionId: String,
+        userId: String,
+        type: NotificationType
+    ):  LiveNotificationModel
+
+    /**
+     * Enviar notificação "live começando" para todos inscritos
+     */
+    suspend fun notifyLiveStartingSoon(sessionId: String): Int
+
+    /**
+     * Enviar notificação "live começou" para todos inscritos
+     */
+    suspend fun notifyLiveStarted(sessionId: String):  Int
+
+    /**
+     * Enviar notificação "gravação disponível"
+     */
+    suspend fun notifyRecordingAvailable(
+        sessionId: String,
+        recordingId: String
+    ):  Int
+
+    // ==================== READ ====================
+
+    /**
+     * Buscar notificações do usuário
+     */
+    suspend fun getUserNotifications(
+        userId: String,
+        page: Int = 1,
+        pageSize: Int = 20
+    ):  List<LiveNotificationModel>
+
+    /**
+     * Buscar notificações não enviadas
+     */
+    suspend fun getPendingNotifications():  List<LiveNotificationModel>
+
+    // ==================== UPDATE ====================
+
+    /**
+     * Marcar notificação como enviada
+     */
+    suspend fun markAsSent(notificationId: String):  LiveNotificationModel
+
+    // ==================== DELETE ====================
+
+    /**
+     * Deletar notificação
+     */
+    suspend fun deleteNotification(notificationId: String):  Boolean
+
+    /**
+     * Limpar notificações antigas
+     */
+    suspend fun clearOldNotifications(olderThanDays: Int = 30):  Int
+
+    // ==================== STATISTICS ====================
+
+    /**
+     * Contar notificações pendentes
+     */
+    suspend fun countPendingNotifications(userId: String? = null): Int
+}
+
+
 class datasource {
 }
+
+
