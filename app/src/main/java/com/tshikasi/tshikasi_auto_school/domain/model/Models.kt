@@ -2603,7 +2603,8 @@ enum class LiveStatus {
 
     @SerialName("live")
     LIVE,
-
+    @SerialName("paused")
+    PAUSED,
     @SerialName("ended")
     ENDED,
 
@@ -2648,6 +2649,8 @@ enum class ChatMessageType {
 /**
  * LiveSessionModel - Sessão de Aula ao Vivo
  */
+
+
 
 @Serializable
 @Parcelize
@@ -2741,8 +2744,71 @@ data class LiveSessionModel(
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     var currentUserParticipant: LiveParticipantModel? = null
 
-) : Parcelable
+) : Parcelable {
 
+    // ==================== PROPRIEDADES COMPUTADAS ====================
+
+    /**
+     * Verifica se a live é gratuita
+     */
+    val isFree: Boolean get() = price == 0.0
+
+    /**
+     * Verifica se está ao vivo agora
+     */
+    val isLiveNow: Boolean get() = status == LiveStatus.LIVE
+
+    /**
+     * Verifica se já terminou
+     */
+    val hasEnded: Boolean get() = status == LiveStatus.ENDED
+
+    /**
+     * Verifica se está agendada (futura)
+     */
+    val isUpcoming: Boolean get() = status == LiveStatus.SCHEDULED
+
+    /**
+     * Verifica se foi cancelada
+     */
+    val isCancelled: Boolean get() = status == LiveStatus.CANCELLED
+
+    /**
+     * Verifica se está cheia (max participants)
+     */
+    val isFull: Boolean get() = maxParticipants?.let { participantCount >= it } ?: false
+
+    /**
+     * Verifica se o usuário pode entrar
+     */
+    val canJoin: Boolean get() = isPublic && !isFull && !hasEnded && !isCancelled
+
+    /**
+     * Verifica se o usuário atual já entrou
+     */
+    val currentUserJoined: Boolean get() = currentUserParticipant != null
+
+    /**
+     * Papel do usuário atual na live
+     */
+    val currentUserRole: ParticipantRole? get() = currentUserParticipant?.role
+
+    /**
+     * Cor baseada na disciplina (para UI)
+     */
+    val subjectColor: Color
+        get() = when (subject.lowercase()) {
+            "matemática" -> Color(0xFFEF4444) // Red500
+            "português" -> Color(0xFF3B82F6)  // Blue500
+            "inglês" -> Color(0xFF8B5CF6)     // Purple500
+            "biologia" -> Color(0xFF10B981)   // Green500
+            "química" -> Color(0xFFF59E0B)    // Yellow500
+            "física" -> Color(0xFFEC4899)     // Pink500
+            "história" -> Color(0xFFF97316)   // Orange500
+            "geografia" -> Color(0xFF059669)  // Emerald500
+            else -> Color(0xFF6B7280)         // Gray500
+        }
+}
 @Serializable
 @Parcelize
 data class LiveParticipantModel(
@@ -2914,15 +2980,7 @@ data class StreamInfoResponse(
     val error: String? = null
 )
 
-@Serializable
-data class LiveSessionUIModel(
-    val session: LiveSessionModel,
-    val formattedTime: String,
-    val statusBadge: String,
-    val statusColor: Color,
-    val canJoin: Boolean,
-    val isUserJoined: Boolean
-)
+
 
 
 
@@ -3210,3 +3268,14 @@ data class LiveRecordingModel(
             }
         }
 }
+
+
+@Serializable
+data class LiveSessionUIModel(
+    val session: LiveSessionModel,
+    val formattedTime: String,
+    val statusBadge: String,
+    val statusColor: Color,
+    val canJoin: Boolean,
+    val isUserJoined: Boolean
+)

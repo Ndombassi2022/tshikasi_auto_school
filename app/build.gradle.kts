@@ -210,4 +210,8 @@ dependencies {
 
     // ADICIONE ESTA LINHA - HLS support
     implementation("androidx.media3:media3-exoplayer-hls:1.2.0")
+
+
+    
+
 }

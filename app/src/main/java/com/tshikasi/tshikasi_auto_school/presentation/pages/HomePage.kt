@@ -1,2719 +1,5 @@
 package com.tshikasi.tshikasi_auto_school.presentation.pages
 
-
-/*
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HomePage(
-    onLogout: () -> Unit,
-    onVideoClick: (VideoLesson) -> Unit,
-    onSubjectClick: (Subject) -> Unit,
-
-    onNavigateToVideoLesson: (VideoLesson)-> Unit
-) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
-    var showMenu by remember { mutableStateOf(false) }
-    var selectedTab by remember { mutableStateOf(0) } // ← Controla qual página mostrar
-    var isVisible by remember { mutableStateOf(false) }
-
-    // Dados de exemplo
-    val userName = "Maria Santos"
-    val userEmail = "maria.santos@email.com"
-    val userGrade = "10ª Classe"
-    val userPoints = 1250
-    val userLevel = 5
-
-    LaunchedEffect(key1 = true) {
-        delay(100)
-        isVisible = true
-    }
-
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            DrawerContent(
-                userName = userName,
-                userEmail = userEmail,
-                userGrade = userGrade,
-                userLevel = userLevel,
-                userPoints = userPoints,
-                onItemClick = { item ->
-                    scope.launch { drawerState.close() }
-                    // Navegar baseado no item clicado
-                    when (item.title) {
-                        "Início" -> selectedTab = 0
-                        "Minhas Aulas" -> selectedTab = 1
-                        "Exercícios" -> selectedTab = 2
-                        "Ranking" -> selectedTab = 3
-                    }
-                },
-                onLogout = {
-                    scope.launch { drawerState.close() }
-                    onLogout()
-                }
-            )
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text(
-                                text = "TSHIKASI",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Auto School",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Light
-                            )
-                        }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    actions = {
-                        // Notificações
-                        BadgedBox(
-                            badge = {
-                                Badge(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                ) {
-                                    Text("3")
-                                }
-                            }
-                        ) {
-                            IconButton(onClick = { /* Abrir notificações */ }) {
-                                Icon(
-                                    imageVector = Icons.Default.Notifications,
-                                    contentDescription = "Notificações",
-                                    tint = Color.White
-                                )
-                            }
-                        }
-
-                        // Menu do usuário
-                        Box {
-                            IconButton(onClick = { showMenu = !showMenu }) {
-                                Icon(
-                                    imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = "Perfil",
-                                    modifier = Modifier.size(32.dp),
-                                    tint = Color.White
-                                )
-                            }
-
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Meu Perfil") },
-                                    onClick = { /* Navegar para perfil */ },
-                                    leadingIcon = {
-                                        Icon(Icons.Default.Person, null)
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Configurações") },
-                                    onClick = { /* Navegar para configurações */ },
-                                    leadingIcon = {
-                                        Icon(Icons.Default.Settings, null)
-                                    }
-                                )
-                                Divider()
-                                DropdownMenuItem(
-                                    text = { Text("Sair") },
-                                    onClick = {
-                                        showMenu = false
-                                        onLogout()
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            Icons.Default.Logout,
-                                            null,
-                                            tint = MaterialTheme.colorScheme.error
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF3B82F6),
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White,
-                        actionIconContentColor = Color.White
-                    )
-                )
-            },
-            bottomBar = {
-                /*
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Default.Home, "Início") },
-                        label = { Text("Início") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Default.School, "Disciplinas") }, // ✅ MUDAR DE VideoLibrary para School
-                        label = { Text("Disciplinas") } // ✅ MUDAR DE "Aulas" para "Disciplinas"
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
-                        icon = { Icon(Icons.Default.Assignment, "Exercícios") },
-                        label = { Text("Exercícios") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 3,
-                        onClick = { selectedTab = 3 },
-                        icon = { Icon(Icons.Default.EmojiEvents, "Ranking") },
-                        label = { Text("Ranking") }
-                    )
-                }
-                */
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Default.Home, "Início") },
-                        label = { Text("Início") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Default.School, "Disciplinas") }, // ✅ Mudou de VideoLibrary
-                        label = { Text("Disciplinas") } // ✅ Mudou de "Aulas"
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
-                        icon = { Icon(Icons.Default.Assignment, "Exercícios") },
-                        label = { Text("Exercícios") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 3,
-                        onClick = { selectedTab = 3 },
-                        icon = { Icon(Icons.Default.EmojiEvents, "Ranking") },
-                        label = { Text("Ranking") }
-                    )
-                }
-            }
-            /*
-            bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Default.Home, "Início") },
-                        label = { Text("Início") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Default.VideoLibrary, "Aulas") },
-                        label = { Text("Aulas") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
-                        icon = { Icon(Icons.Default.Assignment, "Exercícios") },
-                        label = { Text("Exercícios") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 3,
-                        onClick = { selectedTab = 3 },
-                        icon = { Icon(Icons.Default.EmojiEvents, "Ranking") },
-                        label = { Text("Ranking") }
-                    )
-                }
-            }
-            */
-        ) { paddingValues ->
-            // ✅ AQUI: Mostra a página baseada no selectedTab
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                when (selectedTab) {
-                    0 -> InicioContent(
-                        userName = userName,
-                        userGrade = userGrade,
-                        userPoints = userPoints,
-                        userLevel = userLevel,
-                        onSubjectClick = onSubjectClick,
-
-                        onNavigateToVideoLesson = {},
-                        onVideoClick = {onNavigateToVideoLesson(it)} // ✅ ADICIONAR este parâmetro
-                    )
-                    1 -> DisciplinasPage(onSubjectClick = {onSubjectClick(it)})
-                    2 -> ExercisePage()
-                    3 -> RankingPage()
-                }
-            }
-        }
-    }
-}
-
-// ==================== CONTEÚDO DA TAB INÍCIO ====================
-
-@Composable
-fun InicioContent(
-    userName: String,
-    userGrade: String,
-    userPoints: Int,
-    userLevel: Int,
-    onVideoClick:(VideoLesson) -> Unit,
-    onSubjectClick: (Subject) -> Unit,
-    onNavigateToVideoLesson: (VideoLesson) -> Unit
-) {
-    val todayProgress = 75
-    val streak = 7
-    var isVisible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(key1 = true) {
-        delay(100)
-        isVisible = true
-    }
-
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn()
-    ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header do Usuário
-            item {
-                UserHeaderCard(
-                    userName = userName,
-                    userGrade = userGrade,
-                    userPoints = userPoints,
-                    userLevel = userLevel
-                )
-            }
-
-            // Progresso do Dia
-            item {
-                DailyProgressCard(
-                    progress = todayProgress,
-                    streak = streak
-                )
-            }
-
-            // Atalhos Rápidos
-            item {
-                Text(
-                    text = "Atalhos Rápidos",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    QuickActionCard(
-                        title = "Continuar",
-                        subtitle = "Última aula",
-                        icon = Icons.Default.PlayCircle,
-                        color = Color(0xFF10B981),
-                        modifier = Modifier.weight(1f),
-                        onClick = { /* Continuar última aula */ }
-                    )
-
-                    QuickActionCard(
-                        title = "Downloads",
-                        subtitle = "Offline",
-                        icon = Icons.Default.CloudDownload,
-                        color = Color(0xFF8B5CF6),
-                        modifier = Modifier.weight(1f),
-                        onClick = { /* Ver downloads */ }
-                    )
-                }
-            }
-
-            // Disciplinas
-            /*item {
-                Text(
-                    text = "Minhas Disciplinas",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(subjects) { subject ->
-                        SubjectCard(
-                            subject = subject,
-                            onClick = { /* Abrir disciplina */ }
-                        )
-                    }
-                }
-            }*/
-            item {
-                Text(
-                    text = "Minhas Disciplinas",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(subjects) { subject ->
-                        SubjectCard(
-                            subject = subject,
-                            onClick = {onSubjectClick(subject) } // ✅ CHAMAR O CALLBACK
-                        )
-                    }
-                }
-            }
-
-            // Aulas Recentes
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Continuar a Assistir",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    TextButton(onClick = { /* Ver todas */ }) {
-                        Text("Ver todas")
-                    }
-                }
-            }
-
-            items(recentLessons) { lesson ->
-                LessonCard(
-                    lesson = lesson,
-                    onVideoClick = { onVideoClick(it) }
-                )
-            }
-
-            // Conquistas Recentes
-            item {
-                Text(
-                    text = "Conquistas Recentes",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(achievements) { achievement ->
-                        AchievementBadge(achievement)
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ==================== RANKING PAGE (CRIAR) ====================
-
-@Composable
-fun RankingPage() {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF5F5F5)),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Seu Card
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF3B82F6)
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "#15",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Column {
-                            Text(
-                                text = "Você",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Text(
-                                text = "1250 pontos",
-                                fontSize = 14.sp,
-                                color = Color.White.copy(alpha = 0.9f)
-                            )
-                        }
-                    }
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = Color(0xFFFBBF24),
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-            }
-        }
-
-        // Top 10
-        item {
-            Text(
-                text = "Top 10",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-
-        items(10) { index ->
-            RankingCard(
-                position = index + 1,
-                name = "Estudante ${index + 1}",
-                points = 2000 - (index * 150),
-                isTop3 = index < 3
-            )
-        }
-    }
-}
-
-@Composable
-fun RankingCard(
-    position: Int,
-    name: String,
-    points: Int,
-    isTop3: Boolean
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isTop3) Color(0xFFFFF8E1) else Color.White
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(
-                            when (position) {
-                                1 -> Color(0xFFFFD700) // Ouro
-                                2 -> Color(0xFFC0C0C0) // Prata
-                                3 -> Color(0xFFCD7F32) // Bronze
-                                else -> Color.LightGray
-                            }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "#$position",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (position <= 3) Color.White else Color.DarkGray
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = name,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "$points pontos",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
-                }
-            }
-
-            if (isTop3) {
-                Icon(
-                    imageVector = Icons.Default.EmojiEvents,
-                    contentDescription = null,
-                    tint = Color(0xFFFFD700),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
-}
-
-// ==================== DRAWER E COMPONENTES (Mantidos) ====================
-// (DrawerContent, UserHeaderCard, DailyProgressCard, etc - código anterior)
-
-@Composable
-fun DrawerContent(
-    userName: String,
-    userEmail: String,
-    userGrade: String,
-    userLevel: Int,
-    userPoints: Int,
-    onItemClick: (DrawerItem) -> Unit,
-    onLogout: () -> Unit
-) {
-    ModalDrawerSheet(
-        drawerContainerColor = Color.White
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Header do Drawer
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF3B82F6),
-                                Color(0xFF60A5FA)
-                            )
-                        )
-                    )
-                    .padding(24.dp)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = userName.first().toString(),
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-
-                    Text(
-                        text = userName,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-
-                    Text(
-                        text = userEmail,
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.White.copy(alpha = 0.2f)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.School,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = userGrade,
-                                    fontSize = 12.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.White.copy(alpha = 0.2f)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = null,
-                                    tint = Color(0xFFFBBF24),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = "Nível $userLevel",
-                                    fontSize = 12.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-
-                    Text(
-                        text = "$userPoints pontos totais",
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            LazyColumn(
-                modifier = Modifier.weight(1f)
-            ) {
-                items(drawerMenuItems) { item ->
-                    DrawerMenuItem(
-                        item = item,
-                        onClick = { onItemClick(item) }
-                    )
-                }
-            }
-
-            Divider()
-
-            DrawerMenuItem(
-                item = DrawerItem(
-                    icon = Icons.Default.Logout,
-                    title = "Sair",
-                    iconTint = MaterialTheme.colorScheme.error
-                ),
-                onClick = onLogout
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-fun DrawerMenuItem(
-    item: DrawerItem,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.title,
-            tint = item.iconTint ?: Color.DarkGray,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Text(
-            text = item.title,
-            fontSize = 16.sp,
-            color = item.iconTint ?: Color.DarkGray
-        )
-
-        if (item.badge != null) {
-            Spacer(modifier = Modifier.weight(1f))
-            Badge(
-                containerColor = MaterialTheme.colorScheme.error
-            ) {
-                Text(item.badge)
-            }
-        }
-    }
-}
-
-data class DrawerItem(
-    val icon: ImageVector,
-    val title: String,
-    val badge: String? = null,
-    val iconTint: Color? = null
-)
-
-private val drawerMenuItems = listOf(
-    DrawerItem(Icons.Default.Home, "Início"),
-    DrawerItem(Icons.Default.Person, "Meu Perfil"),
-    DrawerItem(Icons.Default.VideoLibrary, "Minhas Aulas"),
-    DrawerItem(Icons.Default.Assignment, "Exercícios"),
-    DrawerItem(Icons.Default.EmojiEvents, "Conquistas"),
-    DrawerItem(Icons.Default.Leaderboard, "Ranking"),
-    DrawerItem(Icons.Default.CloudDownload, "Downloads"),
-    DrawerItem(Icons.Default.Notifications, "Notificações", badge = "3"),
-    DrawerItem(Icons.Default.Settings, "Configurações"),
-    DrawerItem(Icons.Default.Help, "Ajuda & Suporte"),
-    DrawerItem(Icons.Default.Info, "Sobre")
-)
-
-// Componentes restantes (UserHeaderCard, etc) - código anterior mantido
-// ... (código dos componentes UserHeaderCard, DailyProgressCard, QuickActionCard,
-//      SubjectCard, LessonCard, AchievementBadge + data classes + dados de exemplo)
-
-/*
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HomePage(
-    onLogout: () -> Unit
-) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
-    var showMenu by remember { mutableStateOf(false) }
-    var selectedTab by remember { mutableStateOf(0) }
-    var isVisible by remember { mutableStateOf(false) }
-
-    // Dados de exemplo (substituir com ViewModel)
-    val userName = "Maria Santos"
-    val userEmail = "maria.santos@email.com"
-    val userGrade = "10ª Classe"
-    val userPoints = 1250
-    val userLevel = 5
-    val todayProgress = 75 // %
-    val streak = 7 // dias
-
-    LaunchedEffect(key1 = true) {
-        delay(100)
-        isVisible = true
-    }
-
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            DrawerContent(
-                userName = userName,
-                userEmail = userEmail,
-                userGrade = userGrade,
-                userLevel = userLevel,
-                userPoints = userPoints,
-                onItemClick = { item ->
-                    scope.launch { drawerState.close() }
-                    // Navegar para a tela selecionada
-                },
-                onLogout = {
-                    scope.launch { drawerState.close() }
-                    onLogout()
-                }
-            )
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text(
-                                text = "TSHIKASI",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Auto School",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Light
-                            )
-                        }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    actions = {
-                        // Notificações
-                        BadgedBox(
-                            badge = {
-                                Badge(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                ) {
-                                    Text("3")
-                                }
-                            }
-                        ) {
-                            IconButton(onClick = { /* Abrir notificações */ }) {
-                                Icon(
-                                    imageVector = Icons.Default.Notifications,
-                                    contentDescription = "Notificações",
-                                    tint = Color.White
-                                )
-                            }
-                        }
-
-                        // Menu do usuário
-                        Box {
-                            IconButton(onClick = { showMenu = !showMenu }) {
-                                Icon(
-                                    imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = "Perfil",
-                                    modifier = Modifier.size(32.dp),
-                                    tint = Color.White
-                                )
-                            }
-
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Meu Perfil") },
-                                    onClick = { /* Navegar para perfil */ },
-                                    leadingIcon = {
-                                        Icon(Icons.Default.Person, null)
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Configurações") },
-                                    onClick = { /* Navegar para configurações */ },
-                                    leadingIcon = {
-                                        Icon(Icons.Default.Settings, null)
-                                    }
-                                )
-                                Divider()
-                                DropdownMenuItem(
-                                    text = { Text("Sair") },
-                                    onClick = {
-                                        showMenu = false
-                                        onLogout()
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            Icons.Default.Logout,
-                                            null,
-                                            tint = MaterialTheme.colorScheme.error
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF3B82F6),
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White,
-                        actionIconContentColor = Color.White
-                    )
-                )
-            },
-            bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Default.Home, "Início") },
-                        label = { Text("Início") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Default.VideoLibrary, "Aulas") },
-                        label = { Text("Aulas") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
-                        icon = { Icon(Icons.Default.Assignment, "Exercícios") },
-                        label = { Text("Exercícios") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 3,
-                        onClick = { selectedTab = 3 },
-                        icon = { Icon(Icons.Default.EmojiEvents, "Ranking") },
-                        label = { Text("Ranking") }
-                    )
-                }
-            }
-        ) { paddingValues ->
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn()
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Header do Usuário
-                    item {
-                        UserHeaderCard(
-                            userName = userName,
-                            userGrade = userGrade,
-                            userPoints = userPoints,
-                            userLevel = userLevel
-                        )
-                    }
-
-                    // Progresso do Dia
-                    item {
-                        DailyProgressCard(
-                            progress = todayProgress,
-                            streak = streak
-                        )
-                    }
-
-                    // Atalhos Rápidos
-                    item {
-                        Text(
-                            text = "Atalhos Rápidos",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            QuickActionCard(
-                                title = "Continuar",
-                                subtitle = "Última aula",
-                                icon = Icons.Default.PlayCircle,
-                                color = Color(0xFF10B981),
-                                modifier = Modifier.weight(1f),
-                                onClick = { /* Continuar última aula */ }
-                            )
-
-                            QuickActionCard(
-                                title = "Downloads",
-                                subtitle = "Offline",
-                                icon = Icons.Default.CloudDownload,
-                                color = Color(0xFF8B5CF6),
-                                modifier = Modifier.weight(1f),
-                                onClick = { /* Ver downloads */ }
-                            )
-                        }
-                    }
-
-                    // Disciplinas
-                    item {
-                        Text(
-                            text = "Minhas Disciplinas",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(subjects) { subject ->
-                                SubjectCard(
-                                    subject = subject,
-                                    onClick = { /* Abrir disciplina */ }
-                                )
-                            }
-                        }
-                    }
-
-                    // Aulas Recentes
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Continuar a Assistir",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            TextButton(onClick = { /* Ver todas */ }) {
-                                Text("Ver todas")
-                            }
-                        }
-                    }
-
-                    items(recentLessons) { lesson ->
-                        LessonCard(
-                            lesson = lesson,
-                            onClick = { /* Abrir aula */ }
-                        )
-                    }
-
-                    // Conquistas Recentes
-                    item {
-                        Text(
-                            text = "Conquistas Recentes",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(achievements) { achievement ->
-                                AchievementBadge(achievement)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ==================== DRAWER CONTENT ====================
-
-@Composable
-fun DrawerContent(
-    userName: String,
-    userEmail: String,
-    userGrade: String,
-    userLevel: Int,
-    userPoints: Int,
-    onItemClick: (DrawerItem) -> Unit,
-    onLogout: () -> Unit
-) {
-    ModalDrawerSheet(
-        drawerContainerColor = Color.White
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            // Header do Drawer
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF3B82F6),
-                                Color(0xFF60A5FA)
-                            )
-                        )
-                    )
-                    .padding(24.dp)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Avatar
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = userName.first().toString(),
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-
-                    // Info do usuário
-                    Text(
-                        text = userName,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-
-                    Text(
-                        text = userEmail,
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-
-                    // Grade e Nível
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.White.copy(alpha = 0.2f)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.School,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = userGrade,
-                                    fontSize = 12.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.White.copy(alpha = 0.2f)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = null,
-                                    tint = Color(0xFFFBBF24),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = "Nível $userLevel",
-                                    fontSize = 12.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-
-                    // Pontos
-                    Text(
-                        text = "$userPoints pontos totais",
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Menu Items
-            LazyColumn(
-                modifier = Modifier.weight(1f)
-            ) {
-                items(drawerMenuItems) { item ->
-                    DrawerMenuItem(
-                        item = item,
-                        onClick = { onItemClick(item) }
-                    )
-                }
-            }
-
-            Divider()
-
-            // Logout
-            DrawerMenuItem(
-                item = DrawerItem(
-                    icon = Icons.Default.Logout,
-                    title = "Sair",
-                    iconTint = MaterialTheme.colorScheme.error
-                ),
-                onClick = onLogout
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-fun DrawerMenuItem(
-    item: DrawerItem,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.title,
-            tint = item.iconTint ?: Color.DarkGray,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Text(
-            text = item.title,
-            fontSize = 16.sp,
-            color = item.iconTint ?: Color.DarkGray
-        )
-
-        if (item.badge != null) {
-            Spacer(modifier = Modifier.weight(1f))
-            Badge(
-                containerColor = MaterialTheme.colorScheme.error
-            ) {
-                Text(item.badge)
-            }
-        }
-    }
-}
-
-// ==================== DATA CLASSES ====================
-
-data class DrawerItem(
-    val icon: ImageVector,
-    val title: String,
-    val badge: String? = null,
-    val iconTint: Color? = null
-)
-
-// Menu items do Drawer
-private val drawerMenuItems = listOf(
-    DrawerItem(Icons.Default.Home, "Início"),
-    DrawerItem(Icons.Default.Person, "Meu Perfil"),
-    DrawerItem(Icons.Default.VideoLibrary, "Minhas Aulas"),
-    DrawerItem(Icons.Default.Assignment, "Exercícios"),
-    DrawerItem(Icons.Default.EmojiEvents, "Conquistas"),
-    DrawerItem(Icons.Default.Leaderboard, "Ranking"),
-    DrawerItem(Icons.Default.CloudDownload, "Downloads"),
-    DrawerItem(Icons.Default.Notifications, "Notificações", badge = "3"),
-    DrawerItem(Icons.Default.Settings, "Configurações"),
-    DrawerItem(Icons.Default.Help, "Ajuda & Suporte"),
-    DrawerItem(Icons.Default.Info, "Sobre")
-)
-
-// ==================== COMPONENTES EXISTENTES ====================
-// (UserHeaderCard, DailyProgressCard, QuickActionCard, etc - mantidos iguais)
-
-@Composable
-fun UserHeaderCard(
-    userName: String,
-    userGrade: String,
-    userPoints: Int,
-    userLevel: Int
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF3B82F6)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = userName.first().toString(),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = userName,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = userGrade,
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-            }
-
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = Color(0xFFFBBF24),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = "Nível $userLevel",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-                Text(
-                    text = "$userPoints pontos",
-                    fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.9f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun DailyProgressCard(
-    progress: Int,
-    streak: Int
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Progresso de Hoje",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "$progress%",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF10B981)
-                )
-            }
-
-            LinearProgressIndicator(
-                progress = progress / 100f,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                color = Color(0xFF10B981),
-                trackColor = Color.LightGray.copy(alpha = 0.3f)
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LocalFireDepartment,
-                        contentDescription = null,
-                        tint = Color(0xFFEF4444),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = "$streak dias seguidos",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Text(
-                    text = "Meta: 2h/dia",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun QuickActionCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    color: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = color
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
-            )
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Text(
-                text = subtitle,
-                fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.9f)
-            )
-        }
-    }
-}
-
-@Composable
-fun SubjectCard(
-    subject: Subject,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .width(160.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(subject.color.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = subject.icon,
-                    fontSize = 24.sp
-                )
-            }
-
-            Text(
-                text = subject.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Text(
-                text = "${subject.lessonsCount} aulas",
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-
-            LinearProgressIndicator(
-                progress = subject.progress / 100f,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = subject.color
-            )
-        }
-    }
-}
-
-@Composable
-fun LessonCard(
-    lesson: Lesson,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.LightGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PlayCircle,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = lesson.title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Text(
-                    text = lesson.subject,
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccessTime,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = Color.Gray
-                        )
-                        Text(
-                            text = lesson.duration,
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
-                    }
-
-                    if (lesson.progress > 0) {
-                        Text(
-                            text = "${lesson.progress}% concluído",
-                            fontSize = 12.sp,
-                            color = Color(0xFF10B981)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AchievementBadge(achievement: Achievement) {
-    Card(
-        modifier = Modifier.width(120.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = achievement.color.copy(alpha = 0.1f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = achievement.icon,
-                fontSize = 32.sp
-            )
-            Text(
-                text = achievement.name,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-// ==================== DATA CLASSES ====================
-
-data class Subject(
-    val name: String,
-    val icon: String,
-    val lessonsCount: Int,
-    val progress: Int,
-    val color: Color
-)
-
-data class Lesson(
-    val title: String,
-    val subject: String,
-    val duration: String,
-    val progress: Int
-)
-
-data class Achievement(
-    val name: String,
-    val icon: String,
-    val color: Color
-)
-
-// ==================== DADOS DE EXEMPLO ====================
-
-private val subjects = listOf(
-    Subject("Matemática", "📐", 45, 65, Color(0xFFEF4444)),
-    Subject("Português", "📚", 38, 45, Color(0xFF3B82F6)),
-    Subject("Física", "⚛️", 32, 30, Color(0xFF10B981)),
-    Subject("Química", "🧪", 28, 55, Color(0xFF8B5CF6)),
-    Subject("Biologia", "🧬", 35, 40, Color(0xFF10B981))
-)
-
-private val recentLessons = listOf(
-    Lesson("Equações do 2º Grau", "Matemática", "25 min", 45),
-    Lesson("Classes Gramaticais", "Português", "18 min", 70),
-    Lesson("Leis de Newton", "Física", "22 min", 0)
-)
-
-private val achievements = listOf(
-    Achievement("Primeira Semana", "🔥", Color(0xFFEF4444)),
-    Achievement("10 Aulas", "📚", Color(0xFF3B82F6)),
-    Achievement("100 Pontos", "⭐", Color(0xFFFBBF24)),
-    Achievement("Mestre", "🏆", Color(0xFF10B981))
-)
-*/
-/*
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HomePage(
-    onLogout: () -> Unit
-) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
-    var showMenu by remember { mutableStateOf(false) }
-    var selectedTab by remember { mutableStateOf(0) }
-    var isVisible by remember { mutableStateOf(false) }
-
-    // Dados de exemplo (substituir com ViewModel)
-    val userName = "Maria Santos"
-    val userEmail = "maria.santos@email.com"
-    val userGrade = "10ª Classe"
-    val userPoints = 1250
-    val userLevel = 5
-    val todayProgress = 75 // %
-    val streak = 7 // dias
-
-    LaunchedEffect(key1 = true) {
-        delay(100)
-        isVisible = true
-    }
-
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            DrawerContent(
-                userName = userName,
-                userEmail = userEmail,
-                userGrade = userGrade,
-                userLevel = userLevel,
-                userPoints = userPoints,
-                onItemClick = { item ->
-                    scope.launch { drawerState.close() }
-                    // Navegar para a tela selecionada
-                },
-                onLogout = {
-                    scope.launch { drawerState.close() }
-                    onLogout()
-                }
-            )
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text(
-                                text = "TSHIKASI",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Auto School",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Light
-                            )
-                        }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    actions = {
-                        // Notificações
-                        BadgedBox(
-                            badge = {
-                                Badge(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                ) {
-                                    Text("3")
-                                }
-                            }
-                        ) {
-                            IconButton(onClick = { /* Abrir notificações */ }) {
-                                Icon(
-                                    imageVector = Icons.Default.Notifications,
-                                    contentDescription = "Notificações",
-                                    tint = Color.White
-                                )
-                            }
-                        }
-
-                        // Menu do usuário
-                        Box {
-                            IconButton(onClick = { showMenu = !showMenu }) {
-                                Icon(
-                                    imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = "Perfil",
-                                    modifier = Modifier.size(32.dp),
-                                    tint = Color.White
-                                )
-                            }
-
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Meu Perfil") },
-                                    onClick = { /* Navegar para perfil */ },
-                                    leadingIcon = {
-                                        Icon(Icons.Default.Person, null)
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Configurações") },
-                                    onClick = { /* Navegar para configurações */ },
-                                    leadingIcon = {
-                                        Icon(Icons.Default.Settings, null)
-                                    }
-                                )
-                                Divider()
-                                DropdownMenuItem(
-                                    text = { Text("Sair") },
-                                    onClick = {
-                                        showMenu = false
-                                        onLogout()
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            Icons.Default.Logout,
-                                            null,
-                                            tint = MaterialTheme.colorScheme.error
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF3B82F6),
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White,
-                        actionIconContentColor = Color.White
-                    )
-                )
-            },
-            bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Default.Home, "Início") },
-                        label = { Text("Início") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Default.VideoLibrary, "Aulas") },
-                        label = { Text("Aulas") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 2,
-                        onClick = { selectedTab = 2 },
-                        icon = { Icon(Icons.Default.Assignment, "Exercícios") },
-                        label = { Text("Exercícios") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 3,
-                        onClick = { selectedTab = 3 },
-                        icon = { Icon(Icons.Default.EmojiEvents, "Ranking") },
-                        label = { Text("Ranking") }
-                    )
-                }
-            }
-        ) { paddingValues ->
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn()
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Header do Usuário
-                    item {
-                        UserHeaderCard(
-                            userName = userName,
-                            userGrade = userGrade,
-                            userPoints = userPoints,
-                            userLevel = userLevel
-                        )
-                    }
-
-                    // Progresso do Dia
-                    item {
-                        DailyProgressCard(
-                            progress = todayProgress,
-                            streak = streak
-                        )
-                    }
-
-                    // Atalhos Rápidos
-                    item {
-                        Text(
-                            text = "Atalhos Rápidos",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            QuickActionCard(
-                                title = "Continuar",
-                                subtitle = "Última aula",
-                                icon = Icons.Default.PlayCircle,
-                                color = Color(0xFF10B981),
-                                modifier = Modifier.weight(1f),
-                                onClick = { /* Continuar última aula */ }
-                            )
-
-                            QuickActionCard(
-                                title = "Downloads",
-                                subtitle = "Offline",
-                                icon = Icons.Default.CloudDownload,
-                                color = Color(0xFF8B5CF6),
-                                modifier = Modifier.weight(1f),
-                                onClick = { /* Ver downloads */ }
-                            )
-                        }
-                    }
-
-                    // Disciplinas
-                    item {
-                        Text(
-                            text = "Minhas Disciplinas",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(subjects) { subject ->
-                                SubjectCard(
-                                    subject = subject,
-                                    onClick = { /* Abrir disciplina */ }
-                                )
-                            }
-                        }
-                    }
-
-                    // Aulas Recentes
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Continuar a Assistir",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            TextButton(onClick = { /* Ver todas */ }) {
-                                Text("Ver todas")
-                            }
-                        }
-                    }
-
-                    items(recentLessons) { lesson ->
-                        LessonCard(
-                            lesson = lesson,
-                            onClick = { /* Abrir aula */ }
-                        )
-                    }
-
-                    // Conquistas Recentes
-                    item {
-                        Text(
-                            text = "Conquistas Recentes",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(achievements) { achievement ->
-                                AchievementBadge(achievement)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ==================== DRAWER CONTENT ====================
-
-@Composable
-fun DrawerContent(
-    userName: String,
-    userEmail: String,
-    userGrade: String,
-    userLevel: Int,
-    userPoints: Int,
-    onItemClick: (DrawerItem) -> Unit,
-    onLogout: () -> Unit
-) {
-    ModalDrawerSheet(
-        drawerContainerColor = Color.White
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            // Header do Drawer
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF3B82F6),
-                                Color(0xFF60A5FA)
-                            )
-                        )
-                    )
-                    .padding(24.dp)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Avatar
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = userName.first().toString(),
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-
-                    // Info do usuário
-                    Text(
-                        text = userName,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-
-                    Text(
-                        text = userEmail,
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-
-                    // Grade e Nível
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.White.copy(alpha = 0.2f)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.School,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = userGrade,
-                                    fontSize = 12.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.White.copy(alpha = 0.2f)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = null,
-                                    tint = Color(0xFFFBBF24),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = "Nível $userLevel",
-                                    fontSize = 12.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-
-                    // Pontos
-                    Text(
-                        text = "$userPoints pontos totais",
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Menu Items
-            LazyColumn(
-                modifier = Modifier.weight(1f)
-            ) {
-                items(drawerMenuItems) { item ->
-                    DrawerMenuItem(
-                        item = item,
-                        onClick = { onItemClick(item) }
-                    )
-                }
-            }
-
-            Divider()
-
-            // Logout
-            DrawerMenuItem(
-                item = DrawerItem(
-                    icon = Icons.Default.Logout,
-                    title = "Sair",
-                    iconTint = MaterialTheme.colorScheme.error
-                ),
-                onClick = onLogout
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-fun DrawerMenuItem(
-    item: DrawerItem,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.title,
-            tint = item.iconTint ?: Color.DarkGray,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Text(
-            text = item.title,
-            fontSize = 16.sp,
-            color = item.iconTint ?: Color.DarkGray
-        )
-
-        if (item.badge != null) {
-            Spacer(modifier = Modifier.weight(1f))
-            Badge(
-                containerColor = MaterialTheme.colorScheme.error
-            ) {
-                Text(item.badge)
-            }
-        }
-    }
-}
-
-// ==================== DATA CLASSES ====================
-
-data class DrawerItem(
-    val icon: ImageVector,
-    val title: String,
-    val badge: String? = null,
-    val iconTint: Color? = null
-)
-
-// Menu items do Drawer
-private val drawerMenuItems = listOf(
-    DrawerItem(Icons.Default.Home, "Início"),
-    DrawerItem(Icons.Default.Person, "Meu Perfil"),
-    DrawerItem(Icons.Default.VideoLibrary, "Minhas Aulas"),
-    DrawerItem(Icons.Default.Assignment, "Exercícios"),
-    DrawerItem(Icons.Default.EmojiEvents, "Conquistas"),
-    DrawerItem(Icons.Default.Leaderboard, "Ranking"),
-    DrawerItem(Icons.Default.CloudDownload, "Downloads"),
-    DrawerItem(Icons.Default.Notifications, "Notificações", badge = "3"),
-    DrawerItem(Icons.Default.Settings, "Configurações"),
-    DrawerItem(Icons.Default.Help, "Ajuda & Suporte"),
-    DrawerItem(Icons.Default.Info, "Sobre")
-)
-*/
-// ==================== COMPONENTES EXISTENTES ====================
-// (UserHeaderCard, DailyProgressCard, QuickActionCard, etc - mantidos iguais)
-
-@Composable
-fun UserHeaderCard(
-    userName: String,
-    userGrade: String,
-    userPoints: Int,
-    userLevel: Int
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF3B82F6)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = userName.first().toString(),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = userName,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = userGrade,
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
-                }
-            }
-
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = Color(0xFFFBBF24),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = "Nível $userLevel",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-                Text(
-                    text = "$userPoints pontos",
-                    fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.9f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun DailyProgressCard(
-    progress: Int,
-    streak: Int
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Progresso de Hoje",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "$progress%",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF10B981)
-                )
-            }
-
-            LinearProgressIndicator(
-                progress = progress / 100f,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                color = Color(0xFF10B981),
-                trackColor = Color.LightGray.copy(alpha = 0.3f)
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LocalFireDepartment,
-                        contentDescription = null,
-                        tint = Color(0xFFEF4444),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = "$streak dias seguidos",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Text(
-                    text = "Meta: 2h/dia",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun QuickActionCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    color: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = color
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
-            )
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Text(
-                text = subtitle,
-                fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.9f)
-            )
-        }
-    }
-}
-
-@Composable
-fun SubjectCard(
-    subject: Subject,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .width(160.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(subject.color.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = subject.icon,
-                    fontSize = 24.sp
-                )
-            }
-
-            Text(
-                text = subject.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Text(
-                text = "${subject.lessonsCount} aulas",
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-
-            LinearProgressIndicator(
-                progress = subject.progress / 100f,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = subject.color
-            )
-        }
-    }
-}
-
-@Composable
-fun LessonCard(
-    lesson: VideoLesson,
-    onVideoClick: (VideoLesson) -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = {onVideoClick(lesson)}),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.LightGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PlayCircle,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = lesson.title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Text(
-                    text = lesson.subject,
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccessTime,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = Color.Gray
-                        )
-                        Text(
-                            text = lesson.duration,
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
-                    }
-
-                    if (lesson.progress > 0) {
-                        Text(
-                            text = "${lesson.progress}% concluído",
-                            fontSize = 12.sp,
-                            color = Color(0xFF10B981)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AchievementBadge(achievement: Achievement) {
-    Card(
-        modifier = Modifier.width(120.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = achievement.color.copy(alpha = 0.1f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = achievement.icon,
-                fontSize = 32.sp
-            )
-            Text(
-                text = achievement.name,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-// ==================== DATA CLASSES ====================
-
-data class Subject(
-    val name: String,
-    val icon: String,
-    val lessonsCount: Int,
-    val progress: Int,
-    val color: Color
-)
-
-data class Lesson(
-    val title: String,
-    val subject: String,
-    val duration: String,
-    val progress: Int
-)
-
-data class Achievement(
-    val name: String,
-    val icon: String,
-    val color: Color
-)
-
-// ==================== DADOS DE EXEMPLO ====================
-
-private val subjects = listOf(
-    Subject("Matemática", "📐", 45, 65, Color(0xFFEF4444)),
-    Subject("Português", "📚", 38, 45, Color(0xFF3B82F6)),
-    Subject("Física", "⚛️", 32, 30, Color(0xFF10B981)),
-    Subject("Química", "🧪", 28, 55, Color(0xFF8B5CF6)),
-    Subject("Biologia", "🧬", 35, 40, Color(0xFF10B981))
-)
-
-private val recentLessons = listOf(
-    Lesson("Equações do 2º Grau", "Matemática", "25 min", 45),
-    Lesson("Classes Gramaticais", "Português", "18 min", 70),
-    Lesson("Leis de Newton", "Física", "22 min", 0)
-)
-
-private val achievements = listOf(
-    Achievement("Primeira Semana", "🔥", Color(0xFFEF4444)),
-    Achievement("10 Aulas", "📚", Color(0xFF3B82F6)),
-    Achievement("100 Pontos", "⭐", Color(0xFFFBBF24)),
-    Achievement("Mestre", "🏆", Color(0xFF10B981))
-)
-
-*/
-
-
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
@@ -2738,12 +24,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
@@ -2800,12 +89,13 @@ import com.tshikasi.tshikasi_auto_school.presentation.pages.exercise.ExercisePag
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun HomePage(
     onLogout: () -> Unit,
     onSubjectClick: (Subject) -> Unit,
-    onNavigateToVideoLesson: (VideoLesson) -> Unit
+    onNavigateToVideoLesson: (VideoLesson) -> Unit,
+    onNavigateToLives: () -> Unit  // ✅ NOVO PARÂMETRO
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -2813,6 +103,8 @@ fun HomePage(
     var showMenu by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf(0) }
     var isVisible by remember { mutableStateOf(false) }
+
+
 
     // Dados de exemplo
     val userName = "Maria Santos"
@@ -2825,7 +117,7 @@ fun HomePage(
         delay(100)
         isVisible = true
     }
-
+/*
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -2996,6 +288,220 @@ fun HomePage(
                     1 -> DisciplinasPage(onSubjectClick = {onSubjectClick(it)})
                     2 -> ExercisePage()
                     3 -> RankingPage()
+                }
+            }
+        }
+    }
+    */
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            DrawerContent(
+                userName = userName,
+                userEmail = userEmail,
+                userGrade = userGrade,
+                userLevel = userLevel,
+                userPoints = userPoints,
+                onItemClick = { item ->
+                    scope.launch { drawerState.close() }
+                    when (item.title) {
+                        "Início" -> selectedTab = 0
+                        "Disciplinas" -> selectedTab = 1
+                        "Exercícios" -> selectedTab = 2
+                        "Ranking" -> selectedTab = 3
+                        "Lives" -> onNavigateToLives()  // ✅ ADICIONAR AQUI
+                    }
+                },
+                onLogout = {
+                    scope.launch { drawerState.close() }
+                    onLogout()
+                },
+                onClose = {  // ✅ NOVO
+                    scope.launch { drawerState.close() }
+                }
+            )
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(
+                                text = "TSHIKASI",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Auto School",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Light
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Menu",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    actions = {
+                        BadgedBox(
+                            badge = {
+                                Badge(
+                                    containerColor = MaterialTheme.colorScheme.error
+                                ) {
+                                    Text("3")
+                                }
+                            }
+                        ) {
+                            IconButton(onClick = { /* Abrir notificações */ }) {
+                                Icon(
+                                    imageVector = Icons.Default.Notifications,
+                                    contentDescription = "Notificações",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+
+                        Box {
+                            IconButton(onClick = { showMenu = !showMenu }) {
+                                Icon(
+                                    imageVector = Icons.Default.AccountCircle,
+                                    contentDescription = "Perfil",
+                                    modifier = Modifier.size(32.dp),
+                                    tint = Color.White
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Meu Perfil") },
+                                    onClick = { /* Navegar para perfil */ },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Person, null)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Configurações") },
+                                    onClick = { /* Navegar para configurações */ },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Settings, null)
+                                    }
+                                )
+                                Divider()
+                                DropdownMenuItem(
+                                    text = { Text("Sair") },
+                                    onClick = {
+                                        showMenu = false
+                                        onLogout()
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Logout,
+                                            null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFF3B82F6),
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+                    )
+                )
+            },
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        icon = { Icon(Icons.Default.Home, "Início") },
+                        label = { Text("Início") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        icon = { Icon(Icons.Default.School, "Disciplinas") },
+                        label = { Text("Disciplinas") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2 },
+                        icon = { Icon(Icons.Default.Assignment, "Exercícios") },
+                        label = { Text("Exercícios") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 3,
+                        onClick = { selectedTab = 3 },
+                        icon = { Icon(Icons.Default.EmojiEvents, "Ranking") },
+                        label = { Text("Ranking") }
+                    )
+                    // ✅ NOVA TAB - LIVES
+                    NavigationBarItem(
+                        selected = selectedTab == 4,
+                        onClick = {
+                            selectedTab = 4
+                            onNavigateToLives()
+                        },
+                        icon = {
+                            BadgedBox(
+                                badge = {
+                                    // Badge vermelho se houver lives ao vivo
+                                    Badge(
+                                        containerColor = Color(0xFFEF4444)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Circle,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(8.dp),
+                                            tint = Color.White
+                                        )
+                                    }
+                                }
+                            ) {
+                                Icon(Icons.Default.LiveTv, "Lives")
+                            }
+                        },
+                        label = { Text("Lives") }
+                    )
+                }
+            }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                when (selectedTab) {
+                    0 -> InicioContent(
+                        userName = userName,
+                        userGrade = userGrade,
+                        userPoints = userPoints,
+                        userLevel = userLevel,
+                        onSubjectClick = onSubjectClick,
+                        onVideoClick = onNavigateToVideoLesson
+                    )
+                    1 -> DisciplinasPage(onSubjectClick = {onSubjectClick(it)})
+                    2 -> ExercisePage()
+                    3 -> RankingPage()
+                    4 -> {
+                        // Quando clicar na tab Lives, navega para LiveStreamListPage
+                        LaunchedEffect(Unit) {
+                            onNavigateToLives()
+                            selectedTab = 0 // Volta para Início
+                        }
+                    }
                 }
             }
         }
@@ -3308,7 +814,7 @@ fun RankingCard(
 }
 
 // ==================== DRAWER CONTENT ====================
-
+/*
 @Composable
 fun DrawerContent(
     userName: String,
@@ -3341,6 +847,347 @@ fun DrawerContent(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = userName.first().toString(),
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    Text(
+                        text = userName,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
+                    Text(
+                        text = userEmail,
+                        fontSize = 14.sp,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White.copy(alpha = 0.2f)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.School,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = userGrade,
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White.copy(alpha = 0.2f)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFBBF24),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Nível $userLevel",
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = "$userPoints pontos totais",
+                        fontSize = 14.sp,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LazyColumn(
+                modifier = Modifier.weight(1f)
+            ) {
+                items(drawerMenuItems) { item ->
+                    DrawerMenuItem(
+                        item = item,
+                        onClick = { onItemClick(item) }
+                    )
+                }
+            }
+
+            Divider()
+
+            DrawerMenuItem(
+                item = DrawerItem(
+                    icon = Icons.Default.Logout,
+                    title = "Sair",
+                    iconTint = MaterialTheme.colorScheme.error
+                ),
+                onClick = onLogout
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+*/
+// ✅ SUBSTITUIR A FUNÇÃO DrawerContent COMPLETA
+/*
+@Composable
+fun DrawerContent(
+    userName: String,
+    userEmail: String,
+    userGrade: String,
+    userLevel: Int,
+    userPoints: Int,
+    onItemClick: (DrawerItem) -> Unit,
+    onLogout: () -> Unit
+) {
+    ModalDrawerSheet(
+        drawerContainerColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // ✅ HEADER COM BOTÃO FECHAR
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF3B82F6),
+                                Color(0xFF60A5FA)
+                            )
+                        )
+                    )
+                    .padding(24.dp)
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // ✅ BOTÃO FECHAR NO CANTO SUPERIOR DIREITO
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        IconButton(
+                            onClick = {
+                                // Precisa passar o scope aqui - ver solução abaixo
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Fechar menu",
+                                tint = Color.White
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = userName.first().toString(),
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    Text(
+                        text = userName,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
+                    Text(
+                        text = userEmail,
+                        fontSize = 14.sp,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White.copy(alpha = 0.2f)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.School,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = userGrade,
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White.copy(alpha = 0.2f)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFBBF24),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Nível $userLevel",
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = "$userPoints pontos totais",
+                        fontSize = 14.sp,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LazyColumn(
+                modifier = Modifier.weight(1f)
+            ) {
+                items(drawerMenuItems) { item ->
+                    DrawerMenuItem(
+                        item = item,
+                        onClick = { onItemClick(item) }
+                    )
+                }
+            }
+
+            Divider()
+
+            DrawerMenuItem(
+                item = DrawerItem(
+                    icon = Icons.Default.Logout,
+                    title = "Sair",
+                    iconTint = MaterialTheme.colorScheme.error
+                ),
+                onClick = onLogout
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}*/
+@Composable
+fun DrawerContent(
+    userName: String,
+    userEmail: String,
+    userGrade: String,
+    userLevel: Int,
+    userPoints: Int,
+    onItemClick: (DrawerItem) -> Unit,
+    onLogout: () -> Unit,
+    onClose: () -> Unit  // ✅ NOVO
+) {
+    ModalDrawerSheet(
+        drawerContainerColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF3B82F6),
+                                Color(0xFF60A5FA)
+                            )
+                        )
+                    )
+                    .padding(24.dp)
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // ✅ BOTÃO FECHAR
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        IconButton(onClick = onClose) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Fechar menu",
+                                tint = Color.White
+                            )
+                        }
+                    }
+
                     Box(
                         modifier = Modifier
                             .size(80.dp)
@@ -3928,7 +1775,7 @@ data class Achievement(
 )
 
 // ==================== DADOS DE EXEMPLO ====================
-
+/*
 private val drawerMenuItems = listOf(
     DrawerItem(Icons.Default.Home, "Início"),
     DrawerItem(Icons.Default.Person, "Meu Perfil"),
@@ -3941,7 +1788,7 @@ private val drawerMenuItems = listOf(
     DrawerItem(Icons.Default.Settings, "Configurações"),
     DrawerItem(Icons.Default.Help, "Ajuda & Suporte"),
     DrawerItem(Icons.Default.Info, "Sobre")
-)
+)*/
 
 private val subjects = listOf(
     Subject("Matemática", "📐", 45, 65, Color(0xFFEF4444)),
@@ -4025,3 +1872,17 @@ private val achievements = listOf(
     Achievement("Mestre", "🏆", Color(0xFF10B981))
 )
 
+private val drawerMenuItems = listOf(
+    DrawerItem(Icons.Default.Home, "Início"),
+    DrawerItem(Icons.Default.Person, "Meu Perfil"),
+    DrawerItem(Icons.Default.School, "Disciplinas"),
+    DrawerItem(Icons.Default.Assignment, "Exercícios"),
+    DrawerItem(Icons.Default.LiveTv, "Lives"),  // ✅ NOVO
+    DrawerItem(Icons.Default.EmojiEvents, "Conquistas"),
+    DrawerItem(Icons.Default.Leaderboard, "Ranking"),
+    DrawerItem(Icons.Default.CloudDownload, "Downloads"),
+    DrawerItem(Icons.Default.Notifications, "Notificações", badge = "3"),
+    DrawerItem(Icons.Default.Settings, "Configurações"),
+    DrawerItem(Icons.Default.Help, "Ajuda & Suporte"),
+    DrawerItem(Icons.Default.Info, "Sobre")
+)
