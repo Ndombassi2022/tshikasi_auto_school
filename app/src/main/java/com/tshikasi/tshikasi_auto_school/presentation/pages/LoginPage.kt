@@ -922,7 +922,6 @@ fun LoginPage(
                             }
                         }
 
-
                         // Botão Entrar
                         OutlinedButton(
                             onClick = {
@@ -942,83 +941,6 @@ fun LoginPage(
                                 color = Color(0xFFB40E02)
                             )
                         }
-
-/*
-                        // Divider
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(1.dp)
-                                    .background(Color.White.copy(alpha = 0.2f))
-                            )
-                            Text(
-                                text = "OU",
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                fontSize = 12.sp,
-                                color = Color(0xFF93C5FD),
-                                fontWeight = FontWeight.Medium
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(1.dp)
-                                    .background(Color.White.copy(alpha = 0.2f))
-                            )
-                        }
-                        */
-
-                        // Botões de Login Social
-                        /*Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            // Google
-                            OutlinedButton(
-                                onClick = { /* Login com Google */ },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = Color.White.copy(alpha = 0.05f)
-                                ),
-                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Circle,
-                                    contentDescription = "Google",
-                                    modifier = Modifier.size(20.dp),
-                                    tint = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Google", color = Color.White)
-                            }
-
-                            // Facebook
-                            OutlinedButton(
-                                onClick = { /* Login com Facebook */ },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = Color.White.copy(alpha = 0.05f)
-                                ),
-                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Facebook,
-                                    contentDescription = "Facebook",
-                                    modifier = Modifier.size(20.dp),
-                                    tint = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Facebook", color = Color.White)
-                            }
-                        }
-                        */
                     }
                 }
             }

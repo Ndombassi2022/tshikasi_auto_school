@@ -12,6 +12,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.LifecycleObserver
+import com.tshikasi.tshikasi_auto_school.di.DataSourceModule
+import com.tshikasi.tshikasi_auto_school.di.RepositoryModule
+import com.tshikasi.tshikasi_auto_school.di.UseCaseModule
+import com.tshikasi.tshikasi_auto_school.di.ViewModelModule
 import dagger.hilt.android.HiltAndroidApp
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
@@ -51,7 +55,7 @@ class TshikasiAutoSchool: Application(), LifecycleObserver {
         startKoin {
             androidLogger()
             androidContext(this@TshikasiAutoSchool)
-           // modules(RepositoryModule, DataSourceModule, ViewModelModule, UseCaseModule)
+            modules(RepositoryModule, DataSourceModule, ViewModelModule, UseCaseModule)
         }
       //  Firebase.initialize(this)
 

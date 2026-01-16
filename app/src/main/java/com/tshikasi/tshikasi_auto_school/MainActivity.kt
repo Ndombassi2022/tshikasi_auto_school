@@ -123,6 +123,7 @@ import com.tshikasi.tshikasi_auto_school.presentation.pages.classroom.VideoPlaye
 import com.tshikasi.tshikasi_auto_school.presentation.pages.live_stream.CreateLivePage
 import com.tshikasi.tshikasi_auto_school.presentation.pages.live_stream.LiveStreamListPage
 import com.tshikasi.tshikasi_auto_school.presentation.pages.live_stream.LiveStreamPlayerPage
+import com.tshikasi.tshikasi_auto_school.presentation.pages.school.SchoolListPage
 import com.tshikasi.tshikasi_auto_school.ui.theme.Tshikasi_auto_schoolTheme
 /*
 class MainActivity : ComponentActivity() {
@@ -286,7 +287,8 @@ class MainActivity : ComponentActivity() {
                     "welcome" -> {
                         WelcomePage(
                             onGetStarted = { currentScreen = "register" },
-                            onLogin = { currentScreen = "login" }
+                            onLogin = { currentScreen = "login" },
+                            onNavigateToSchoolListPage = {currentScreen = "school_list"}
                         )
                     }
 
@@ -297,6 +299,16 @@ class MainActivity : ComponentActivity() {
                             onForgotPasswordClick = { currentScreen = "forgot_password" },
                             onBackClick = { currentScreen = "welcome" }
                         )
+                    }
+                    "school_list" -> {
+                        // Implementar SchoolListPage se necessário
+                         SchoolListPage(
+                             onNavigateToLocationGuidePageClick = { /*TODO*/ },
+                             onPopupBack = { /*TODO*/ },
+                             onNavigateToLocalServiceListPage = { /*TODO*/ },
+                             onNavigateToSchoolAddPage = {}
+
+                         )
                     }
 
                     "register" -> {

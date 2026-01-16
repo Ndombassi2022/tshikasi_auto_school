@@ -61,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+
 /*
 @Composable
 fun WelcomePage(
@@ -289,6 +290,7 @@ private fun FeatureItem(
 */
 @Composable
 fun WelcomePage(
+    onNavigateToSchoolListPage: () -> Unit,
     onGetStarted: () -> Unit,
     onLogin: () -> Unit,
     onExploreMap: () -> Unit = {}
@@ -434,73 +436,17 @@ fun WelcomePage(
                 }
             }
             Spacer(modifier = Modifier.height(48.dp))
-            // ===== MAIN FEATURES GRID =====
-            /*AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(1000, delayMillis = 200)) + slideInVertically(tween(1000, delayMillis = 200))
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
 
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        FeatureCard(
-                            modifier = Modifier.weight(1f),
-                            icon = "📹",
-                            title = "Videoaulas Completas",
-                            description = "Currículo da 1ª à 12ª classe em sequência progressiva",
-                            gradient = listOf(Color(0xFF3B82F6), Color(0xFF06B6D4)),
-                            isActive = activeFeature == 0,
-                            onClick = { activeFeature = 0 }
-                        )
 
-                        FeatureCard(
-                            modifier = Modifier.weight(1f),
-                            icon = "📡",
-                            title = "Aulas ao Vivo",
-                            description = "Live streams interativos com professores",
-                            gradient = listOf(Color(0xFFA855F7), Color(0xFFEC4899)),
-                            isActive = activeFeature == 1,
-                            onClick = { activeFeature = 1 }
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        FeatureCard(
-                            modifier = Modifier.weight(1f),
-                            icon = "🗺️",
-                            title = "Localiza a Tua Escola",
-                            description = "Mapa com todas escolas de Angola",
-                            gradient = listOf(Color(0xFF10B981), Color(0xFF059669)),
-                            isActive = activeFeature == 2,
-                            onClick = { activeFeature = 2 }
-                        )
-
-                        FeatureCard(
-                            modifier = Modifier.weight(1f),
-                            icon = "📊",
-                            title = "Progresso Real",
-                            description = "Acompanha o desempenho escolar",
-                            gradient = listOf(Color(0xFFF97316), Color(0xFFEF4444)),
-                            isActive = activeFeature == 3,
-                            onClick = { activeFeature = 3 }
-                        )
-                    }
-                }
-            }*/
-            // ===== MAIN FEATURES GRID =====
-            // ✅ SUBSTITUIR O BLOCO "MAIN FEATURES GRID" POR ESTE:
-
-// ===== MAIN FEATURES GRID - FULL WIDTH =====
+            // ===== MAIN FEATURES GRID - FULL WIDTH =====
             AnimatedVisibility(
                 visible = isVisible,
-                enter = fadeIn(tween(1000, delayMillis = 200)) + slideInVertically(tween(1000, delayMillis = 200))
+                enter = fadeIn(tween(1000, delayMillis = 200)) + slideInVertically(
+                    tween(
+                        1000,
+                        delayMillis = 200
+                    )
+                )
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -527,7 +473,10 @@ fun WelcomePage(
                         description = "Live streams interativos com professores especializados. Faz perguntas em tempo real e participa de enquetes",
                         gradient = listOf(Color(0xFFA855F7), Color(0xFFEC4899)),
                         isActive = activeFeature == 1,
-                        onClick = { activeFeature = 1 }
+                        onClick = {
+                            activeFeature = 1
+                            onLogin()
+                        }
                     )
 
                     // Card 3 - Mapa de Escolas (largura completa)
@@ -538,7 +487,10 @@ fun WelcomePage(
                         description = "Mapa interativo com todas escolas cadastradas em Angola. Visualiza informações completas e localização",
                         gradient = listOf(Color(0xFF10B981), Color(0xFF059669)),
                         isActive = activeFeature == 2,
-                        onClick = { activeFeature = 2 }
+                        onClick = {
+                            activeFeature = 2
+                            onNavigateToSchoolListPage()
+                        }
                     )
 
                     // Card 4 - Progresso (largura completa)
@@ -730,34 +682,34 @@ fun WelcomePage(
             Spacer(modifier = Modifier.height(32.dp))
 
             // ===== FOOTER STATS =====
-          /*  AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(1000, delayMillis = 900))
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        number = "5000+",
-                        label = "Videoaulas",
-                        gradient = listOf(Color(0xFF3B82F6), Color(0xFF06B6D4))
-                    )
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        number = "300+",
-                        label = "Escolas",
-                        gradient = listOf(Color(0xFFA855F7), Color(0xFFEC4899))
-                    )
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        number = "24/7",
-                        label = "Acesso",
-                        gradient = listOf(Color(0xFF10B981), Color(0xFF059669))
-                    )
-                }
-            }*/
+            /*  AnimatedVisibility(
+                  visible = isVisible,
+                  enter = fadeIn(tween(1000, delayMillis = 900))
+              ) {
+                  Row(
+                      modifier = Modifier.fillMaxWidth(),
+                      horizontalArrangement = Arrangement.spacedBy(12.dp)
+                  ) {
+                      StatCard(
+                          modifier = Modifier.weight(1f),
+                          number = "5000+",
+                          label = "Videoaulas",
+                          gradient = listOf(Color(0xFF3B82F6), Color(0xFF06B6D4))
+                      )
+                      StatCard(
+                          modifier = Modifier.weight(1f),
+                          number = "300+",
+                          label = "Escolas",
+                          gradient = listOf(Color(0xFFA855F7), Color(0xFFEC4899))
+                      )
+                      StatCard(
+                          modifier = Modifier.weight(1f),
+                          number = "24/7",
+                          label = "Acesso",
+                          gradient = listOf(Color(0xFF10B981), Color(0xFF059669))
+                      )
+                  }
+              }*/
 
             Spacer(modifier = Modifier.height(40.dp))
         }

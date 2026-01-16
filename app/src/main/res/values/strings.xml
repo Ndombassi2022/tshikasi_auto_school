@@ -1,3 +1,390 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">tshikasi_auto_school</string>
+
+
+    <string name="next">Next</string>
+    <string name="lorem_ipsum">Laoreg</string>
+
+    <string name="first_fragment_label">First</string>
+    <string name="second_fragment_label">Second</string>
+
+    <string name="app_name">Tshikasi Platform</string>
+    <!-- English Translation Language-->
+    <string name="name">Name</string>
+    <string name="description">Description</string>
+    <string name="phone">Phone</string>
+    <string name="mobile">Mobile</string>
+    <string name="email">Email</string>
+    <string name="address">Address</string>
+    <string name="police">Police</string>
+    <string name="fire">Fire</string>
+    <string name="ambulance">Ambulance</string>
+    <string name="access">Access</string>
+    <string name="verify">Verify</string>
+    <string name="cancel">Cancel</string>
+    <string name="places">Places </string>
+    <string name="hello">Hello</string>
+    <string name="we_make_simple_your_life">We make simple your life</string>
+    <string name="taxi">Taxi</string>
+    <string name="my_house">My house</string>
+    <string name="chat">Chat</string>
+    <string name="events">Events</string>
+    <string name="commercial">Commercial</string>
+    <string name="home">Home</string>
+    <string name="person">Person</string>
+    <string name="settings">Settings</string>
+    <string name="add_new_place">Add new place</string>
+    <string name="go_to">Go to</string>
+    <string name="virtual_store">Virtual store</string>
+    <string name="other_services">Other services</string>
+    <string name="confirmation_code">Confirmation code</string>
+    <string name="back">Back</string>
+    <string name="previous">Previous</string>
+    <string name="validate">Validate</string>
+    <string name="details">Details</string>
+    <string name="information">Information</string>
+    <string name="user_name">User name</string>
+    <string name="full_name">Full name</string>
+    <string name="example">Example</string>
+    <string name="password">Password</string>
+    <string name="following">Following</string>
+    <string name="followers">Followers</string>
+    <string name="image_url">Image url</string>
+    <string name="bio">Bio</string>
+    <string name="url">Url</string>
+    <string name="total_posts">Total number of messages</string>
+    <string name="created_at">Created At</string>
+    <string name="updated_at">Updated At</string>
+    <string name="register_now">Register now</string>
+    <string name="forgot_your_password">Forgot your password?</string>
+    <string name="select_product_type">Select product type</string>
+    <string name="select_product_supplier">Select product supplier</string>
+    <string name="product_type">Product type</string>
+    <string name="product">Product</string>
+    <string name="detachment_title">Furniture and Real Estate</string>
+    <string name="supplier">Supplier</string>
+    <string name="turism">Turism</string>
+    <string name="service_provider">Service Provider</string>
+    <string name="justice_and_rights">Justice and Rights </string>
+    <string name="exit">Exit </string>
+    <string name="language">Language </string>
+    <string name="logout">Logout </string>
+    <string name="continent">Continent</string>
+    <string name="ok">OK</string>
+    <string name="save">Save</string>
+    <string name="select_language">Select Language </string>
+    <string name="cart_empty">Cart is empty, please add a product</string>
+    <string name="stock">Stock</string>
+    <string name="review">Review</string>
+    <string name="total_general">Grand Total</string>
+    <string name="total_discount">Total Discount</string>
+    <string name="total_to_pay">Total to Pay</string>
+    <string name="price">Price</string>
+    <string name="discount">Discount</string>
+    <string name="login_instruction">To access the system, enter your reference, username, and password</string>
+    <string name="reference_hint">The reference to be entered is the one you received when registering your company or business</string>
+    <string name="administration">Administration</string>
+    <string name="administration_description">System administration: product entry into stock, pre-inventory, virtual store management, etc...</string>
+    <string name="sales">Sales</string>
+    <string name="sales_description">Make in-person and online sales more easily</string>
+    <string name="confirm">Confirm</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="report">Report</string>
+    <string name="management">Management</string>
+    <string name="pre_inventory">Pre Inventory</string>
+    <string name="product_category">Product Category</string>
+    <string name="product_sub_category">Product Subcategory</string>
+    <string name="product_provider">Product Provider</string>
+    <string name="sale_daily_stock">Sale and Daily Stock</string>
+    <string name="sale_virtual_store">Virtual Store Sale</string>
+    <string name="no_data">No data</string>
+    <string name="error">Error</string>
+    <string name="purchase_qtd">Purchase Qtd</string>
+    <string name="purchase_value">Purchase Value</string>
+    <string name="existing_qtd">Existing Qtd</string>
+    <string name="virtual_store_qtd">Virtual Store Qtd</string>
+    <string name="daily_sale_stock_qtd">Daily Sale Stock Qtd</string>
+    <string name="down_qtd">Down Qtd</string>
+    <string name="confirmation">Confirmation</string>
+    <string name="confirm_add_to_stock">You can add it to the sales stock or in the online store</string>
+    <string name="existing_qtd_label">Existing QTD</string>
+    <string name="qtd">Qtd</string>
+    <string name="add_price">Add Price</string>
+    <string name="quantity">Quantity</string>
+    <string name="add_quantity">Add quantity</string>
+    <string name="add_to_virtual_store">Add to Virtual Store</string>
+    <string name="add_to_daily_sale_stock">Add to Daily Sale Stock</string>
+    <string name="add_virtual_stock">Add to Virtual Store Stock</string>
+    <string name="operation_successful">Operation completed successfully</string>
+    <string name="selected_qtd">Selected Qtd</string>
+    <string name="price_stock">Price Stock</string>
+    <string name="select_image_continue">Select image and continue</string>
+    <string name="add_product_details">Add details of product</string>
+    <string name="product_detail_hint">Product details help attract customer attention.&#10;Always detail your products for the virtual store.</string>
+    <string name="weigh">Weigh</string>
+    <string name="select_weigh">Select weigh</string>
+    <string name="weigh_info">Weight is important for delivery in your virtual store.&#10;For example, when a purchase is made with delivery, we must know the total weight to see if it fits on a motorbike or should go by car.&#10;Each item is in G or ML. Please select one and enter the value.</string>
+    <string name="sell">Sell</string>
+    <string name="sale_instruction">You can add the quantity and select the product in the list to add it to the sale list</string>
+    <string name="total">Total</string>
+    <string name="change">CHANGE</string>
+    <string name="customer_name">Customer Name</string>
+    <string name="customer_nif">Customer NIF</string>
+    <string name="customer_phone">Customer Phone</string>
+    <string name="process">Process</string>
+    <string name="empty_payment_field">Payment amount is empty. Please enter the amount and continue</string>
+    <string name="empty_reference_value_field">Reference value is empty. Please enter the amount and continue</string>
+    <string name="empty_reference_number_field">Reference number is empty. Please enter the number and continue</string>
+    <string name="reference_value_less_than_total">Reference value is less than TOTAL. Please enter the full amount to proceed</string>
+    <string name="reference_value_more_than_total">Reference value is greater than TOTAL. Please enter the correct amount to proceed</string>
+    <string name="card_value_more_than_total">Card value is greater than TOTAL. Please enter the correct amount to proceed</string>
+    <string name="card_value_less_than_total">Card value is less than TOTAL. Please enter the correct amount to proceed</string>
+    <string name="cash_value_less_than_total">Cash value is less than TOTAL. Please enter the correct amount to proceed</string>
+    <string name="cash_card_value_less_than_total">Cash and Card value is less than TOTAL. Please verify the values</string>
+    <string name="cash_card_value_more_than_total">Cash and Card value is greater than TOTAL. Please verify the values</string>
+    <string name="empty_card_number_field">Card number is empty. Please enter the card number and continue</string>
+    <string name="empty_card_value_field">Card amount is empty. Please enter the card amount and continue</string>
+    <string name="empty_credit_value_field">Credit amount is empty. Please enter the credit value and continue</string>
+    <string name="credit_value_more_than_total">Credit amount exceeds TOTAL. It must match TOTAL exactly. Please check</string>
+    <string name="credit_value_less_than_total">Credit amount is less than TOTAL. Please verify and continue</string>
+    <string name="empty_transfer_value_field">Transfer amount is empty. Please verify and continue</string>
+    <string name="empty_transfer_number_field">Transfer number is empty. Please verify and continue</string>
+    <string name="transfer_value_less_than_total">Transfer amount is less than TOTAL. Please verify and continue</string>
+    <string name="transfer_value_more_than_total">Transfer amount is more than TOTAL. Please verify and continue</string>
+    <string name="empty_customer_card_number">Customer card number is empty. Please verify and continue</string>
+    <string name="empty_customer_card_value">Customer card value is empty. Please verify and continue</string>
+    <string name="customer_card_value_less_than_total">Customer card value is less than TOTAL. Please verify and continue</string>
+    <string name="customer_card_value_more_than_total">Customer card value is greater than TOTAL. Please verify and continue</string>
+    <string name="confirm_sale_message_1">You are about to complete a sale. Are you sure the amount received is equal to or more than TOTAL? Once confirmed, you cannot undo it. Do you want to continue?</string>
+    <string name="confirm_sale_message_2">Let\'s remind you again. Once the sale is made, it cannot be undone. Are you sure the amount received is equal to or more than TOTAL?</string>
+    <string name="sale_type">Sale Type</string>
+    <string name="select_sale_type">Select sale type</string>
+    <string name="cash_value">Cash Amount</string>
+    <string name="card_number">Card Number</string>
+    <string name="card_value">Card Amount</string>
+    <string name="cash">Cash</string>
+    <string name="credit_value">Credit Amount</string>
+    <string name="transfer_value">Transfer Amount</string>
+    <string name="transfer_number">Transfer Number</string>
+    <string name="reference_value">Reference Amount</string>
+    <string name="reference_number">Reference Number</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="print">Print</string>
+    <string name="no_printer_paired">No printer paired</string>
+    <string name="refresh">Refresh</string>
+    <string name="bluetooth_permission_denied">Bluetooth permissions not granted.</string>
+    <string name="printer_not_connected">Printer not connected or outputStream is null.</string>
+    <string name="bluetooth_connect_permission_denied">BLUETOOTH_CONNECT permission not granted.</string>
+    <string name="printer_connection_failed">Failed to connect to printer.</string>
+    <string name="print_success">Print sent successfully!</string>
+    <string name="printers">Printers</string>
+    <string name="processing_please_wait">Processing, please wait...</string>
+    <string name="finishing_almost_done">Finishing, just a little more...</string>
+    <string name="quantity_exceeds_existing">The requested quantity exceeds the available stock.&#10;EXISTING: %1$d&#10;REQUESTED: %2$d</string>
+    <string name="processing_invoice">Processing invoice, please wait a moment...</string>
+    <string name="updating_general_stock">Updating general stock, please wait...</string>
+    <string name="share">Share</string>
+
+    <string name="saving_please_wait">Saving, please wait...</string>
+    <string name="image_large_or_slow_network_wait">If the image is too large or the internet is slow, this may take a few seconds, please wait...</string>
+    <string name="finishing_almost_there">Finishing, almost there...</string>
+    <string name="saving_your_place">Saving your location, please wait....</string>
+    <string name="creating_management_user">Creating your management system user, please wait....</string>
+    <string name="saving_your_updates">Saving your updates, please wait....</string>
+    <string name="uploading_image_progress">Uploading image: %1$d%%</string>
+    <string name="invalid_username_or_password">Invalid username or password</string>
+    <string name="what_do_you_want_to_search">What do you want to search?</string>
+    <string name="search">Search...</string>
+    <string name="suggest_your_business">Suggest your business</string>
+    <string name="suggest_your_profession">Suggest your profession</string>
+    <string name="select_service_provider_type">Select service provider type</string>
+    <string name="select_province">Select province</string>
+    <string name="select_municipality">Select municipality</string>
+    <string name="service_type">Service type</string>
+    <string name="please_select_province">Please select province</string>
+    <string name="municipality">Municipality</string>
+    <string name="please_select_municipality">Please select municipality</string>
+    <string name="please_select_country">Please select country</string>
+    <string name="province">Province</string>
+    <string name="select_gallery_image">Select gallery image</string>
+    <string name="get_realtime_photo">Get realtime photo</string>
+    <string name="service_detail_description">The detail will serve as a brief presentation of your services, speak briefly, clearly and objectively to attract platform users</string>
+    <string name="identification">Identification</string>
+    <string name="selected_service_type_message">You selected %1$s. If you want to register as a different type, just select from the types. By registering, you will open more opportunities for your micro, small, medium or large business. You will be seen and reached more easily. So describe your business very well.</string>
+    <string name="insert_data_error">One error occurred while inserting the data</string>
+    <string name="select_service">Select service</string>
+    <string name="login_error_reference_username_password">Your reference or username or password not match. Please verify and try again.</string>
+    <string name="reference">Reference</string>
+    <string name="registration">Registration</string>
+    <string name="user_registration">User registration</string>
+    <string name="profile_image_tip">It is important to add an image or take a real-time photo for your profile</string>
+    <string name="email_code_verification">We have sent a code to your email. Please check and enter the code to continue</string>
+    <string name="resend_code">Resend the code again</string>
+    <string name="friendship_request">Friend request</string>
+    <string name="congratulations_you_can_invite_friends">Congratulations, %1$s! Now you can invite friends and family to enjoy the chat</string>
+    <string name="about_to_send_friend_request">Hello, %1$s! You are about to send a friend request</string>
+    <string name="select_privacy">Please select the privacy option</string>
+    <string name="smart_search">Smart search</string>
+    <string name="click_to_join_chat">Click now to join the chat</string>
+    <string name="chat_join_info">Hello, %1$s! By joining the chat, you’ll make video and voice calls, exchange messages, and much more... If you want more privacy, you can choose to be private and only those you select will be able to contact you. Otherwise, choose public so everyone in the chat can reach you.</string>
+    <string name="chat_access_info">Hello, %1$s! To make video calls, voice calls or send messages and much more to your family and friends, you need to join the chat. You can choose to be visible to everyone or have a private account where you select who can interact with you.</string>
+    <string name="select_friend_or_insert_code">If you want to be friends with someone, just select from the list below. If it’s a private contact, ask for their code and enter it below.</string>
+    <string name="chat_registration">Chat registration</string>
+    <string name="invite_friend_to_interact">You can invite a friend to interact anytime you want. Just select the user and wait for their confirmation.</string>
+    <string name="add_new_friend">Add a new friend</string>
+    <string name="chat_access_description">Hello, %1$s, you are not part of the chat. To access chat contacts, you must first join. Just select your privacy as public or private. In private mode, you will be hidden from everyone except those you select. In public mode, you will be visible to everyone. This way you will have access to video calls, voice calls, messaging, file sharing, and much more with your family and friends anytime. It\'s very fast and secure.</string>
+    <string name="contact_does_not_need_to_be_added">Your contact does not need to be added</string>
+    <string name="answer">Answer</string>
+    <string name="done">Done</string>
+    <string name="friendship_confirmation">Friendship confirmation</string>
+    <string name="accept">Accept</string>
+    <string name="reject">Reject</string>
+    <string name="insert_product_description">Enter the description of the product you want</string>
+    <string name="initial_quantity">Initial Quantity</string>
+    <string name="quantity_sold">Quantity Sold</string>
+    <string name="unrecognized_voice">Unrecognized voice recording</string>
+    <string name="audio_not_detected">Audio not detected</string>
+    <string name="type_something">Type something…</string>
+    <string name="write_or_speak_message">Write or speak your message</string>
+    <string name="listen_before_sending">Before sending the audio, listen carefully</string>
+    <string name="error_loading_audio">Error loading audio</string>
+    <string name="pause">Pause</string>
+    <string name="listen">Listen</string>
+    <string name="error_playing_audio">Error playing audio</string>
+    <string name="send">Send</string>
+    <string name="sent_audio">Sent: %1$s</string>
+    <string name="message">Message</string>
+    <string name="error_translating">Error translating: %1$s</string>
+    <string name="target_language">Target language</string>
+    <string name="contact">Contact</string>
+    <string name="contact_service">Contact the service</string>
+    <string name="cannot_add_self">You cannot add yourself. Please select another user</string>
+    <string name="proceed">Proceed</string>
+    <string name="congrats_now_invite">Congratulations, %1$s now you can invite friends and family to enjoy the chat</string>
+    <string name="call">Call</string>
+    <string name="add_service_before_video">Add a service before adding the video</string>
+    <string name="my_account">My account</string>
+    <string name="qr_description">You can share your contact with a friend by scanning this QR code. If you want to be friends with someone, scan their QR code.</string>
+    <string name="scan_now">Scan now</string>
+    <string name="contact_already_exists">Contact already exists.</string>
+    <string name="friendship_started">Congratulations, your friendship bond has started successfully.</string>
+    <string name="friendship_accepted_message">%1$s accepted your friend request. Your friendship bond has started successfully.</string>
+
+    <string name="print_or_share_invoice">Print or Share Invoice</string>
+    <string name="select_printer">Select a Printer</string>
+    <string name="select_printer_first">Please select a printer first</string>
+    <string name="printing">Printing…</string>
+    <string name="generating_pdf">Generating PDF…</string>
+    <string name="pdf_generated">PDF generated successfully</string>
+    <string name="share_invoice">Share Invoice</string>
+    <string name="processing">Processing…</string>
+    <string name="error_loading_devices">Error loading devices</string>
+    <string name="unknown_device">Unknown Device</string>
+    <string name="expand">Expand</string>
+
+
+    <!--FORM LOCAL    esses &#10; é equivalente a \n-->
+    <string name="form_local_add_title">
+    You selected %1$s. If you wish to register as a different type, just choose it from the list.
+    &#10;By registering, you open more opportunities for your micro, small, medium, or large business.
+    &#10;You will be seen and reached more easily.
+    &#10;So, describe your business in detail.
+    </string>
+
+    <string name="local_type">Local Type</string>
+    <string name="select_local_type">Select Local Type</string>
+    <string name="country">Country</string>
+    <string name="select_country">Select Country</string>
+    <string name="please_select_continent">Please select continent</string>
+    <string name="select_gallery_or_camera">Select gallery image or take real-time photo</string>
+    <string name="nif">NIF</string>
+    <string name="enter_full_name">Enter your full name</string>
+    <string name="select_image_to_identify">Select an image to identify</string>
+    <string name="form_local_add_detail_info_dialog">The detail will serve as a brief presentation of your services. Speak briefly, clearly, and objectively to attract the attention of platform users.</string>
+
+
+    <!--FORM LOGIN PRINCIPAL -->
+    <string name="form_login_principal_title">Hello again </string>
+    <string name="form_login_principal_sub_title">For your security, your credentials should not be shared with anyone. There is very sensitive data that only you should have access to. </string>
+    <string name="form_login_principal_create_account">Create account</string>
+    <string name="bom_dia_novamente">Good morning again</string>
+    <string name="boa_tarde_novamente">Good afternoon again</string>
+    <string name="boa_noite_novamente">Good evening again</string>
+    <string name="boa_madrugada">Good early morning</string>
+    <!--FORM VALIDATE -->
+
+
+    <!--FORMS LOCAL SERVICE ADD -->
+    <string name="form_add_local_service_title">When we want to present our products or services, we must be extra careful. Because those interested will be from different social classes. If we promote our products or services well, the probability of being contacted is very high. Therefore, do not skimp on the presentation of your products or services.</string>
+    <string name="form_add_local_service_dialog_title">Choose an image that identifies your service, or take a photo in real time. Be very strict when choosing the image to attract interested parties</string>
+    <string name="form_add_local_service_dialog_insert_a_description_of_service">Insert description of service</string>
+    <string name="form_add_local_service_dialog_insert_a_details_of_service">Insert details of service</string>
+
+    <!-- FORM PRINCIPAL HOME -->
+    <string name="form_principal_home_places_details">Search without limits for everything you can imagine, from schools, hospitals, universities, churches, mosques, restaurants, shops, barbershops, inns and much more...</string>
+    <string name="form_principal_home_chat_details">Interact with your friends and family at any time by sharing images, videos, documents, exchanging messages, audio and video calls and much more... quickly, efficiently and securely</string>
+    <string name="form_principal_home_taxi_details">Call a taxi wherever you are. Calculate your distance and negotiation proposals with drivers and much more...</string>
+    <string name="form_principal_home_commercial_details">Manage your business with professionalism and security. Make sales directly with individuals and through the online store. Inventory control, proforma invoice and much more...</string>
+    <string name="form_principal_home_events_details">Search for events in the city with ease and quickly buy tickets for everything you need from shows, games, parties, congresses, weddings and much more...</string>
+    <string name="form_principal_home_my_house_details">If you have difficulty reaching someone because you dont know their correct address, ask or send your location or send your home address to everyone or to someone specific.</string>
+    <string name="form_principal_home_desapego_details">Whether you\'re looking to sell, rent, or buy a property or furniture, we offer a complete, simple, and secure solution. Discover our offerings.</string>
+    <string name="form_principal_home_justice_details">If you want to know your rights in a very easy and objective way and have guidance on the laws of your country, this space was designed for you.</string>
+    <string name="form_principal_home_turim_details">Do you like new places and adventures?  Discover tourist sites in Angola in one click and we will take you to the chosen location</string>
+    <string name="form_principal_home_service_provider_details">Find service providers such as bricklayers, mechanics, day laborers, live-in nurses, water tankers, gravel or aerial trucks, tilers and much more...</string>
+
+    <!-- FORM PRINCIPAL USER ADD -->
+    <string name="tittle_form_add_principal_user">By registering you will have access to several exclusive services. Therefore, the email and telephone number entered must be valid and the password must contain at least 9 characters and preferably letters, numbers and special characters.</string>
+    <string name="title_form_user_add_confirmation_code_principal_user">We send a confirmation code, check your phone\s SMS or email inbox. Sign in to validate your data</string>
+
+
+    <!-- FORM VIRTUAL STORE HOME -->
+    <string name="virtual_store_home_top_selling_products">Top selling products</string>
+
+
+    <!-- FORM COMMERCIAL -->
+    <string name="commercial_login_insert_reference">Insert your reference</string>
+    <string name="commercial_login_title_reference">Because the data is very sensitive, we ask that you enter your access reference if you do not have one, register your company or business.</string>
+    <string name="commercial_login_title_login">For your security, your credentials should not be shared and if you do not have them, please contact your administrator for more information.</string>
+
+    <string name="commercial_home_form_dashboard">Dashboard</string>
+
+    <!-- FORM PRODUCT TYPE -->
+    <string name="product_type_list_title">Product type list</string>
+    <string name="product_type_add_title">New product type</string>
+
+    <!-- FORM PRODUCT Category -->
+    <string name="product_category_list_title">Product category list</string>
+    <string name="product_Category_add_title">New product category</string>
+
+    <!-- FORM PRODUCT Sub Category -->
+    <string name="product_sub_category_list_title">Product sub category list</string>
+    <string name="product_sub_Category_add_title">New product sub category</string>
+
+    <!-- FORM PRODUCT -->
+    <string name="product_list_title">Product list</string>
+    <string name="product_add_title">New product</string>
+
+    <!-- FROM COMMERCIAL SALE -->
+    <string name="commercial_sale_title">Sale</string>
+    <string name="daily_sale_stock_list_title">Daily sale stock list</string>
+    <string name="product_provider_list_title">Product provider list</string>
+    <string name="product_provider_add_title">New entry into the warehouse</string>
+    <string name="pre_inventory_list_title">Pre inventory list</string>
+    <string name="virtual_store_list_title">Virtual store list</string>
+    <string name="sale_list_title">Sale list</string>
+
+    <!--Validation Fields -->
+    <string name="the_filed_is_required">The field is required</string>
+    <string name="thats_not_a_valid_email">That\s not a valid email</string>
+    <string name="thats_not_a_valid_phone_number">That\s not a valid phone number</string>
+    <string name="thats_not_a_valid_mobile_number">That\s not a valid mobile number</string>
+    <string name="minimum_characters">Minimum %1$d characters</string>
+    <string name="maximum_characters">Maximum %1$d characters</string>
+
+    <string name="map_key">AIzaSyDAiFYLmGv-c1po_tz4_qi9dlcOgVJYoy0</string>
+
+
+    <!-- FORM SERVICE USER REQUEST  -->
+    <string name="requested_service_list">Requested service list</string>
 </resources>
