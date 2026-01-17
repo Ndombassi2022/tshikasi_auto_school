@@ -101,14 +101,19 @@ class MainActivity : ComponentActivity() {
 }
 */
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.core.app.ActivityCompat
+import androidx.media3.common.util.NotificationUtil.createNotificationChannel
 import com.tshikasi.tshikasi_auto_school.domain.model.LiveSessionModel
 import com.tshikasi.tshikasi_auto_school.presentation.pages.ForgotPasswordPage
 import com.tshikasi.tshikasi_auto_school.presentation.pages.HomePage
@@ -123,8 +128,11 @@ import com.tshikasi.tshikasi_auto_school.presentation.pages.classroom.VideoPlaye
 import com.tshikasi.tshikasi_auto_school.presentation.pages.live_stream.CreateLivePage
 import com.tshikasi.tshikasi_auto_school.presentation.pages.live_stream.LiveStreamListPage
 import com.tshikasi.tshikasi_auto_school.presentation.pages.live_stream.LiveStreamPlayerPage
+import com.tshikasi.tshikasi_auto_school.presentation.pages.school.SchoolAddPage
 import com.tshikasi.tshikasi_auto_school.presentation.pages.school.SchoolListPage
 import com.tshikasi.tshikasi_auto_school.ui.theme.Tshikasi_auto_schoolTheme
+import dagger.hilt.android.AndroidEntryPoint
+
 /*
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -264,9 +272,31 @@ class MainActivity : ComponentActivity() {
     }
 }
 */
+
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private val permission = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.RECORD_AUDIO,
+        Manifest.permission.CAMERA,
+        Manifest.permission.POST_NOTIFICATIONS,
+    )
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val lang = getSharedPreferences("language_prefs", MODE_PRIVATE)
+            .getString("lang", "en") ?: "en"
+
+        ActivityCompat.requestPermissions(
+            this, permission, 100
+        )
+
+
         enableEdgeToEdge()
         setContent {
             Tshikasi_auto_schoolTheme {
@@ -306,7 +336,7 @@ class MainActivity : ComponentActivity() {
                              onNavigateToLocationGuidePageClick = { /*TODO*/ },
                              onPopupBack = { /*TODO*/ },
                              onNavigateToLocalServiceListPage = { /*TODO*/ },
-                             onNavigateToSchoolAddPage = {}
+                             onNavigateToAddSchoolAddPage = {currentScreen = "school_add"},
 
                          )
                     }
@@ -326,6 +356,9 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    "school_add" ->{
+                        SchoolAddPage(onPopupBack = {})
+                    }
                     "home" -> {
                         HomePage(
                             onLogout = { currentScreen = "welcome" },

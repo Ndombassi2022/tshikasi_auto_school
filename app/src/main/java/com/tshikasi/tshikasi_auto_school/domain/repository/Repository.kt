@@ -541,7 +541,7 @@ interface SchoolRepository {
 
     // STATISTICS
     suspend fun countSchoolsByCommune(communeId: Long): Either<NetworkError, Int>
-    suspend fun countSchoolsByType(): Either<NetworkError, Map<Long, Int>>
+    suspend fun countSchoolsByType(schoolType:String): Either<NetworkError, Map<Long, Int>>
     suspend fun getTotalSchoolsCount(): Either<NetworkError, Int>
     suspend fun getSchoolPerformanceMetrics(schoolId: Long): Either<NetworkError, Map<String, Any>>
 }

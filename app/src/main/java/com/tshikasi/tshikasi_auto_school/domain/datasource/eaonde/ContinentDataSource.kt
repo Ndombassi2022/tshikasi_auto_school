@@ -2,6 +2,7 @@ package com.tshikasi.tshikasi_auto_school.domain.datasource.eaonde
 
 import com.tshikasi.tshikasi_auto_school.domain.model.eaonde.ContinentModel
 
+
 interface ContinentDataSource {
     suspend fun createContinent(continentModel: ContinentModel) : ContinentModel
     suspend fun getAllContinent() : List<ContinentModel>

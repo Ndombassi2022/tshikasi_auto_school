@@ -110,6 +110,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.constraintlayout)
 
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -123,11 +124,25 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.2.0")
     implementation("androidx.media3:media3-common:1.2.0")
 
+    // Media3 ExoPlayer - Versão completa com todos os formatos
+    implementation("androidx.media3:media3-exoplayer:1.2.1")
+    implementation("androidx.media3:media3-exoplayer-dash:1.2.1")
+    implementation("androidx.media3:media3-exoplayer-hls:1.2.1")
+    implementation("androidx.media3:media3-ui:1.2.1")
 
+    // IMPORTANTE: Adicione também os datasources
+    implementation("androidx.media3:media3-datasource:1.2.1")
+    implementation("androidx.media3:media3-datasource-okhttp:1.2.1")
 
     // Firebase
+// Firebase - BOM manages versions
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.messaging)
+    implementation("com.google.firebase:firebase-firestore-ktx") // No version specified
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
 
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("io.arrow-kt:arrow-core:1.2.4")
@@ -212,6 +227,11 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:1.2.0")
 
 
-    
+
+    // Email
+    implementation("com.sun.mail:android-mail:1.6.0") {
+        exclude(group = "org.apache.httpcomponents", module = "httpclient")
+    }
+    implementation("com.sun.mail:android-activation:1.6.0")
 
 }

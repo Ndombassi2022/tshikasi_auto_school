@@ -38,11 +38,13 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Clear
@@ -63,12 +65,14 @@ import androidx.compose.material.icons.rounded.AdminPanelSettings
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Login
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
@@ -102,6 +106,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -136,6 +141,7 @@ import com.tshikasi.tshikasi_auto_school.presentation.viewmodel.SchoolViewModel
 import com.tshikasi.tshikasi_auto_school.utils.ToastContainer
 import com.tshikasi.tshikasi_auto_school.utils.ToastManager
 import com.tshikasi.tshikasi_auto_school.utils.ToastStyle
+import com.tshikasi.tshikasi_auto_school.utils.ToastType
 import com.tshikasi.tshikasi_auto_school.utils.getCurrenteDistance
 import com.tshikasi.tshikasi_auto_school.utils.showLanguageSelectorDialog
 import kotlinx.coroutines.delay
@@ -217,9 +223,10 @@ fun SchoolListPage(
 @Composable
 fun SchoolListPage(
     onNavigateToLocationGuidePageClick : (SchoolModel) -> Unit,
+    onNavigateToAddSchoolAddPage:()->Unit,
     onPopupBack: ()-> Unit,
     onNavigateToLocalServiceListPage:(SchoolModel)-> Unit,
-    onNavigateToSchoolAddPage: (SchoolTypeModel) -> Unit,
+
 ) {
     val schoolViewModel :SchoolViewModel = koinViewModel()
     val context = LocalContext.current
@@ -235,20 +242,21 @@ fun SchoolListPage(
     Column {
         TopContentSchoolList(
             onPopupBack = {onPopupBack()},
+            onNavigateToAddSchoolAddPage = {onNavigateToAddSchoolAddPage()},
            schoolViewModel = schoolViewModel
         )
         Box(modifier = Modifier
             .background(color = Color.Transparent)
             .fillMaxSize()
         ) {
-            ExtendedFloatingActionButton(
+           /* ExtendedFloatingActionButton(
                 onClick = {
 
                     schoolViewModel.getCurrentLocation(context)
                     onNavigateToSchoolAddPage(SchoolTypeModel())
                 },
                 Modifier
-                    .padding(bottom = 6.dp, end = 10.dp)
+                    .padding(bottom = 26.dp, end = 10.dp)
                     .align(Alignment.BottomEnd)
                     .zIndex(1f)
             ) {
@@ -259,7 +267,7 @@ fun SchoolListPage(
                     Text(text = stringResource(id = R.string.add_new_place))
                     Icon(Icons.Rounded.Add, contentDescription ="New place " )
                 }
-            }
+            }*/
 
             ContentBodySchoolList(
                 isSheetOpen = false,
@@ -513,7 +521,7 @@ private fun ContentBodySchoolList(
                     },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(16.dp)
+                        .padding(bottom = 56.dp, end = 10.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.MyLocation,
@@ -554,6 +562,7 @@ private fun ContentBodySchoolList(
 @Composable
 private fun TopContentSchoolList(
     schoolViewModel: SchoolViewModel,
+    onNavigateToAddSchoolAddPage:()->Unit,
     onPopupBack:()->Unit
 ) {
     val context = LocalContext.current
@@ -629,6 +638,7 @@ private fun TopContentSchoolList(
                                   schoolViewModel = schoolViewModel,
                                     expanded = isMenuExpanded,
                                     onDismiss = { isMenuExpanded = false },
+                                    onNavigateToAddSchoolAddPage = {onNavigateToAddSchoolAddPage()},
                                     schoolModel = SchoolModel()
                                 )
                             }
@@ -683,7 +693,7 @@ private fun TopContentSchoolList(
                 ) {
                     Column {
                         Text(
-                            text = "",//localViewModel.selectedLocalType.value?.description.orEmpty().uppercase(),
+                            text = "Escolas",//localViewModel.selectedLocalType.value?.description.orEmpty().uppercase(),
                             style = MaterialTheme.typography.headlineSmall,
                             color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.SemiBold,
@@ -692,7 +702,7 @@ private fun TopContentSchoolList(
                         )
 
                         Text(
-                            text = "",//localViewModel.selectedLocalType.value?.details.orEmpty(),
+                            text = "Pesquise a asua escola de preferência",//localViewModel.selectedLocalType.value?.details.orEmpty(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 4.dp)
@@ -716,6 +726,7 @@ private fun TopContentSchoolList(
         ShowLoginLocalDialog(
             onDismissRequest = {isLoginLocalOpen.value = !isLoginLocalOpen.value },
             onConfirmation = {  },
+            onNavigateToAddSchoolAddPage = {onNavigateToAddSchoolAddPage()},
             schoolViewModel = schoolViewModel
 
         )
@@ -840,6 +851,7 @@ private fun SearchBarSection(
 private fun MenuOptions(
     schoolViewModel: SchoolViewModel,
     expanded: Boolean,
+    onNavigateToAddSchoolAddPage:()->Unit,
     schoolModel: SchoolModel,
     onDismiss: () -> Unit
 ) {
@@ -901,11 +913,12 @@ private fun MenuOptions(
         ShowLoginLocalDialog(
             onDismissRequest = {isLoginLocalOpen.value = !isLoginLocalOpen.value },
             onConfirmation = {  },
+            onNavigateToAddSchoolAddPage = {onNavigateToAddSchoolAddPage()},
             schoolViewModel = schoolViewModel
         )
     }
 }
-
+/*
 
 @Composable
 private fun ShowLoginLocalDialog(
@@ -1225,7 +1238,416 @@ private fun FieldContentLoginLocalBody(
         }
     }
 }
+*/
+@Composable
+private fun ShowLoginLocalDialog(
+    onDismissRequest: () -> Unit,
+    onNavigateToAddSchoolAddPage: ()-> Unit,
+    onConfirmation: () -> Unit,
+    schoolViewModel: SchoolViewModel
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(24.dp),
+            tonalElevation = 8.dp,
+            shadowElevation = 16.dp,
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header
+                LoginDialogHeader()
 
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Form Content
+                FieldContentLoginLocalBody(
+                    onAccess = onConfirmation,
+                    onNavigateToSigUpPage = {
+                        onNavigateToAddSchoolAddPage()
+                        onDismissRequest()
+                   },
+                    onDismissRequest = onDismissRequest,
+                    schoolViewModel = schoolViewModel
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoginDialogHeader() {
+    Icon(
+        imageVector = Icons.Rounded.Lock,
+        contentDescription = "Login Icon",
+        tint = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.size(64.dp)
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(
+        text = "Acesso Local",
+        style = MaterialTheme.typography.headlineMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        fontWeight = FontWeight.Bold
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Text(
+        text = "Faça login para acessar os serviços locais",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center
+    )
+}
+
+@Composable
+private fun FieldContentLoginLocalBody(
+    onAccess: () -> Unit,
+    onNavigateToSigUpPage: () -> Unit,
+    schoolViewModel: SchoolViewModel,
+    onDismissRequest: () -> Unit
+) {
+    val context = LocalContext.current
+
+    // Estados locais
+    var reference by remember { mutableStateOf("") }
+    var userName by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    // Estados de erro
+    var referenceError by remember { mutableStateOf<String?>(null) }
+    var userNameError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
+    // Estado de loading
+    var isLoading by remember { mutableStateOf(false) }
+
+    val toastManager = remember { ToastManager() }
+
+    ToastContainer(
+        toastManager = toastManager,
+        toastStyle = ToastStyle.MODERN_SNACKBAR
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Campo Referência
+            CustomOutlinedTextField(
+                value = reference,
+                onValueChange = {
+                    reference = it.trim()
+                    referenceError = null
+                },
+                label = "Referência",
+                placeholder = "Digite a referência",
+                leadingIcon = Icons.Outlined.Info,
+                error = referenceError,
+                enabled = !isLoading
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Campo Username/Email
+            CustomOutlinedTextField(
+                value = userName,
+                onValueChange = {
+                    userName = it.trim()
+                    userNameError = null
+                },
+                label = "Usuário ou Email",
+                placeholder = "Digite seu usuário ou email",
+                leadingIcon = Icons.Outlined.PersonOutline,
+                error = userNameError,
+                enabled = !isLoading
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Campo Password
+            PasswordTextField(
+                value = password,
+                onValueChange = {
+                    password = it.trim()
+                    passwordError = null
+                },
+                passwordVisible = passwordVisible,
+                onPasswordVisibilityChange = { passwordVisible = it },
+                error = passwordError,
+                enabled = !isLoading
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Botão de Login
+            Button(
+                onClick = {
+                    // Validação
+                    var hasError = false
+
+                    if (reference.isBlank()) {
+                        referenceError = "Referência é obrigatória"
+                        hasError = true
+                    }
+
+                    if (userName.isBlank()) {
+                        userNameError = "Usuário ou email é obrigatório"
+                        hasError = true
+                    }
+
+                    if (password.isBlank()) {
+                        passwordError = "Senha é obrigatória"
+                        hasError = true
+                    } else if (password.length < 6) {
+                        passwordError = "Senha deve ter no mínimo 6 caracteres"
+                        hasError = true
+                    }
+
+                    if (!hasError) {
+                        isLoading = true
+                        // Aqui você chamaria o ViewModel
+                        // schoolViewModel.login(reference, userName, password)
+                        onAccess()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Rounded.Login,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Entrar",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Botão Cancelar
+            OutlinedButton(
+                onClick = onDismissRequest,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                enabled = !isLoading,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                Text(
+                    text = "Cancelar",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Links de ação
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TextButton(
+                    onClick = onNavigateToSigUpPage,
+                    enabled = !isLoading
+                ) {
+                    Text(
+                        text = "Criar conta",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                TextButton(
+                    onClick = {
+                        toastManager.showToast(
+                            message = "Funcionalidade em desenvolvimento",
+                            type = ToastType.INFO
+                        )
+                    },
+                    enabled = !isLoading
+                ) {
+                    Text(
+                        text = "Esqueci a senha",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CustomOutlinedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    leadingIcon: ImageVector,
+    error: String?,
+    enabled: Boolean = true
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            placeholder = { Text(placeholder) },
+            leadingIcon = {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = label,
+                    tint = if (error != null) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    }
+                )
+            },
+            isError = error != null,
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                errorBorderColor = MaterialTheme.colorScheme.error,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            enabled = enabled
+        )
+
+        if (error != null) {
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun PasswordTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    passwordVisible: Boolean,
+    onPasswordVisibilityChange: (Boolean) -> Unit,
+    error: String?,
+    enabled: Boolean = true
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text("Senha") },
+            placeholder = { Text("Digite sua senha") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Lock,
+                    contentDescription = "Senha",
+                    tint = if (error != null) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    }
+                )
+            },
+            trailingIcon = {
+                IconButton(onClick = { onPasswordVisibilityChange(!passwordVisible) }) {
+                    Icon(
+                        imageVector = if (passwordVisible) {
+                            Icons.Outlined.Visibility
+                        } else {
+                            Icons.Outlined.VisibilityOff
+                        },
+                        contentDescription = if (passwordVisible) {
+                            "Ocultar senha"
+                        } else {
+                            "Mostrar senha"
+                        },
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            visualTransformation = if (passwordVisible) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            isError = error != null,
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                errorBorderColor = MaterialTheme.colorScheme.error,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            enabled = enabled
+        )
+
+        if (error != null) {
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+    }
+}
 @Composable
 private fun ButtonDialog(
     schoolViewModel: SchoolViewModel,
@@ -1288,9 +1710,6 @@ private fun ButtonDialog(
 }
 
 
-
-
-
 @Composable
 private fun AddMarkers(localList: List<SchoolModel>?) {
     localList?.let {
@@ -1310,69 +1729,6 @@ private fun AddMarkers(localList: List<SchoolModel>?) {
     }
 }
 
-
-
-/*
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun LocalListCard(
-    localViewModel: LocalViewModel,
-    local: LocalModel,
-    distance: Float,
-    modifier: Modifier = Modifier,
-    elevation: Dp,
-    color : Color,
-    onClick: ()-> Unit
-){
-    ElevatedCard(
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = elevation
-        ),
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor =  MaterialTheme.colorScheme.surfaceContainer,
-        ),
-        onClick = {onClick()}
-    ) {
-        Row (
-
-        ){
-            Box(modifier = Modifier
-                .background(MaterialTheme.colorScheme.primary)
-                .width(100.dp)
-                .height(100.dp)){
-               if(local.urlImage.isNotEmpty()){
-                    AsyncImage(contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize(), model = local.urlImage, contentDescription = "Image")
-               }
-            }
-
-            Spacer(modifier = Modifier.size(5.dp))
-
-            Column {
-                Text(
-                    text = local.description,
-                    modifier = Modifier.padding(top = 5.dp),
-                    style = TextStyle(fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
-                )
-                Text(
-                    text = local.address,
-                    modifier = Modifier.padding(top = 6.dp),
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
-                )
-                Text(
-                    text =if(distance > 1000) String.format("%.2f", distance / 1000)+ " KM" else  String.format("%.2f", distance) +" M",
-                    modifier = Modifier.padding(top = 2.dp)
-                )
-
-            }
-
-        }
-    }
-}
-*/
 
 @Composable
 private fun SchoolListCard(
@@ -1407,7 +1763,7 @@ private fun SchoolListCard(
 
             // Informações do local
             LocalInfo(
-                description = schoolModel.name,
+                description = schoolModel.description,
                 address = schoolModel.address,
                 distance = distance,
                 modifier = Modifier.weight(1f)

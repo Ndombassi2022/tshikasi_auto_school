@@ -3,6 +3,7 @@ package com.tshikasi.tshikasi_auto_school.domain.model
 import android.os.Parcelable
 import androidx.compose.ui.graphics.Color
 import com.tshikasi.tshikasi_auto_school.domain.model.eaonde.CommuneModel
+import com.tshikasi.tshikasi_auto_school.domain.model.eaonde.LocalModel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
@@ -134,6 +135,19 @@ enum class UserStatus {
     @SerialName("TRANSFERRED") TRANSFERRED,
     @SerialName("ON_LEAVE") ON_LEAVE,
     @SerialName("DELETED") DELETED
+}
+
+@Serializable
+enum class SchoolStatus {
+    @SerialName("ACTIVE") ACTIVE,
+    @SerialName("INACTIVE") INACTIVE,
+    @SerialName("PENDING") PENDING,
+    @SerialName("PENDING_APPROVAL") PENDING_APPROVAL,
+    @SerialName("APPROVED") APPROVED,
+    @SerialName("REJECTED") REJECTED,
+    @SerialName("SUSPENDED") SUSPENDED,
+    @SerialName("BLOCKED") BLOCKED,
+    @SerialName("GRADUATED") GRADUATED
 }
 
 @Serializable
@@ -1462,8 +1476,23 @@ data class SchoolModel(
     @SerialName("id")
     val id: Long = 0,
 
-    @SerialName("name")
-    val name: String = "",
+    @SerialName("description")
+    val description: String = "",
+
+    @SerialName("details")
+    val details: String = "",
+
+    @SerialName("nif")
+    val nif: String = "",
+
+    @SerialName("number")
+    val number: String = "",
+
+    @SerialName("licence")
+    val licence: String = "",
+
+    @SerialName("reference")
+    val reference: String = "",
 
     @SerialName("code")
     val code: String = "",
@@ -1474,41 +1503,35 @@ data class SchoolModel(
     @SerialName("address")
     val address: String = "",
 
+    @SerialName("latitude")
+    val latitude: Double = 0.0,
+
+    @SerialName("longitude")
+    val longitude: Double = 0.0,
+
     @SerialName("school_type_id")
     val schoolTypeId: Long = 0,
 
-    @SerialName("school_director_id")
-    val schoolDirectorId: Long? = null,
+    @SerialName("local_id")
+    val localId: Long = 0,
 
     @SerialName("logo_url")
     val logoUrl: String? = null,
 
+    @SerialName("url_image")
+    val urlImage: String? = null,
+
     @SerialName("founded_date")
     val foundedDate: String? = null,
 
-    @SerialName("contact_email")
-    val contactEmail: String = "",
+    @SerialName("email")
+    val email: String = "",
 
-    @SerialName("contact_phone")
-    val contactPhone: String = "",
+    @SerialName("phone")
+    val phone: String = "",
 
     @SerialName("website")
     val website: String? = null,
-
-    @SerialName("total_students")
-    val totalStudents: Int = 0,
-
-    @SerialName("total_teachers")
-    val totalTeachers: Int = 0,
-
-    @SerialName("total_classes")
-    val totalClasses: Int = 0,
-
-    @SerialName("academic_year")
-    val academicYear: String = "", // "2024/2025"
-
-    @SerialName("subscription_plan")
-    val subscriptionPlan: String? = null,
 
     @SerialName("subscription_expires_at")
     val subscriptionExpiresAt: String? = null,
@@ -1531,14 +1554,11 @@ data class SchoolModel(
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     var schoolType: SchoolTypeModel? = null,
 
-    @SerialName("tb_director")
+    @SerialName("tb_local")
     @EncodeDefault(EncodeDefault.Mode.NEVER)
-    var schoolDirector: SchoolDirectorModel? = null,
+    var local: LocalModel? = null,
 
-    @SerialName("tb_classes")
-    @EncodeDefault(EncodeDefault.Mode.NEVER)
-    var classes: List<ClasseModel>? = null
-) : Parcelable
+    ) : Parcelable
 
 /**
  * SchoolDirectorModel - Diretor de escola

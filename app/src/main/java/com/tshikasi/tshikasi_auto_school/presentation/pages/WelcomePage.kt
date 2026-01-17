@@ -62,232 +62,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
-/*
-@Composable
-fun WelcomePage(
-    onGetStarted: () -> Unit,
-    onLogin: () -> Unit
-) {
-    var isVisible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(key1 = true) {
-        delay(300)
-        isVisible = true
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1E3A8A),
-                        Color(0xFF3B82F6),
-                        Color(0xFF60A5FA)
-                    )
-                )
-            )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()) // ✅ SCROLLABLE
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(60.dp))
-
-            // Logo e Título
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn() + slideInVertically()
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Logo temporário
-                    Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "📚",
-                            fontSize = 60.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = "TSHIKASI",
-                        fontSize = 36.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        letterSpacing = 2.sp
-                    )
-
-                    Text(
-                        text = "Auto School",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Light,
-                        color = Color.White.copy(alpha = 0.9f),
-                        letterSpacing = 3.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // Features
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(animationSpec = tween(durationMillis = 800, delayMillis = 200))
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    FeatureItem(
-                        icon = Icons.Default.School,
-                        title = "Aprende ao teu ritmo",
-                        description = "Estuda quando e onde quiseres"
-                    )
-
-                    FeatureItem(
-                        icon = Icons.Default.VideoLibrary,
-                        title = "Aulas em vídeo",
-                        description = "Conteúdo completo da 1ª à 12ª classe"
-                    )
-
-                    FeatureItem(
-                        icon = Icons.Default.CloudDownload,
-                        title = "Modo offline",
-                        description = "Baixa e estuda sem internet"
-                    )
-
-                    FeatureItem(
-                        icon = Icons.Default.EmojiEvents,
-                        title = "Gamificação",
-                        description = "Ganha pontos e badges ao estudar"
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(48.dp)) // ✅ Espaço fixo ao invés de weight
-
-            // Botões
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(animationSpec = tween(durationMillis = 800, delayMillis = 400))
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Botão Começar
-                    Button(
-                        onClick = onGetStarted,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = Color(0xFF1E3A8A)
-                        ),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 4.dp,
-                            pressedElevation = 8.dp
-                        )
-                    ) {
-                        Text(
-                            text = "Começar",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    // Botão Login
-                    OutlinedButton(
-                        onClick = onLogin,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color.White
-                        ),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
-                            width = 2.dp
-                        ),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Text(
-                            text = "Já tenho conta",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-}
-
-@Composable
-private fun FeatureItem(
-    icon: ImageVector,
-    title: String,
-    description: String
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start
-    ) {
-        // Ícone
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.2f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        // Texto
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White
-            )
-
-            Text(
-                text = description,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                color = Color.White.copy(alpha = 0.8f)
-            )
-        }
-    }
-}
-*/
 @Composable
 fun WelcomePage(
     onNavigateToSchoolListPage: () -> Unit,
@@ -494,6 +268,19 @@ fun WelcomePage(
                     )
 
                     // Card 4 - Progresso (largura completa)
+
+                    FeatureCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        icon = "🎓",
+                        title = "Centro de Formação Profissional",
+                        description = "Cursos especializados e certificações profissionais para desenvolvimento de competências técnicas e práticas",
+                        gradient = listOf(Color(0xFF3B82F6), Color(0xFF06B6D4)),
+                        isActive = activeFeature == 0,
+                        onClick = {
+                            activeFeature = 0
+                            onLogin()
+                        }
+                    )
                     FeatureCard(
                         modifier = Modifier.fillMaxWidth(),
                         icon = "📊",
@@ -614,7 +401,7 @@ fun WelcomePage(
             Spacer(modifier = Modifier.height(32.dp))
 
             // ===== CTA BUTTONS =====
-            AnimatedVisibility(
+           /* AnimatedVisibility(
                 visible = isVisible,
                 enter = fadeIn(tween(1000, delayMillis = 700))
             ) {
@@ -677,7 +464,7 @@ fun WelcomePage(
                         )
                     }
                 }
-            }
+            }*/
 
             Spacer(modifier = Modifier.height(32.dp))
 

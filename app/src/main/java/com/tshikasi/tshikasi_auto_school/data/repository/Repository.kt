@@ -14,11 +14,17 @@ import com.tshikasi.tshikasi_auto_school.domain.datasource.GradeDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.GuardianDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.LessonDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.LessonProgressDataSource
-import com.tshikasi.tshikasi_auto_school.domain.datasource.*
+import com.tshikasi.tshikasi_auto_school.domain.datasource.LiveChatDataSource
+import com.tshikasi.tshikasi_auto_school.domain.datasource.LiveNotificationDataSource
+import com.tshikasi.tshikasi_auto_school.domain.datasource.LiveParticipantDataSource
+import com.tshikasi.tshikasi_auto_school.domain.datasource.LivePollDataSource
+import com.tshikasi.tshikasi_auto_school.domain.datasource.LiveReactionDataSource
+import com.tshikasi.tshikasi_auto_school.domain.datasource.LiveRecordingDataSource
+import com.tshikasi.tshikasi_auto_school.domain.datasource.LiveSessionDataSource
+import com.tshikasi.tshikasi_auto_school.domain.datasource.LiveStatsDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.MessageDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.NotificationDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.PaymentDataSource
-import com.tshikasi.tshikasi_auto_school.domain.datasource.SchoolDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.SchoolDirectorDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.SchoolTypeDataSource
 import com.tshikasi.tshikasi_auto_school.domain.datasource.StateManagerDataSource
@@ -41,6 +47,7 @@ import com.tshikasi.tshikasi_auto_school.domain.model.AssignmentStatus
 import com.tshikasi.tshikasi_auto_school.domain.model.AssignmentSubmissionModel
 import com.tshikasi.tshikasi_auto_school.domain.model.AttendanceModel
 import com.tshikasi.tshikasi_auto_school.domain.model.AttendanceStatus
+import com.tshikasi.tshikasi_auto_school.domain.model.ChatMessageType
 import com.tshikasi.tshikasi_auto_school.domain.model.ClasseModel
 import com.tshikasi.tshikasi_auto_school.domain.model.CreateLiveSessionRequest
 import com.tshikasi.tshikasi_auto_school.domain.model.DifficultyLevel
@@ -52,21 +59,34 @@ import com.tshikasi.tshikasi_auto_school.domain.model.GradeLevel
 import com.tshikasi.tshikasi_auto_school.domain.model.GradeModel
 import com.tshikasi.tshikasi_auto_school.domain.model.GuardianModel
 import com.tshikasi.tshikasi_auto_school.domain.model.GuardianRelation
+import com.tshikasi.tshikasi_auto_school.domain.model.JoinLiveSessionRequest
 import com.tshikasi.tshikasi_auto_school.domain.model.LessonModel
 import com.tshikasi.tshikasi_auto_school.domain.model.LessonProgressModel
-import com.tshikasi.tshikasi_auto_school.domain.model.*
+import com.tshikasi.tshikasi_auto_school.domain.model.LiveChatMessageModel
+import com.tshikasi.tshikasi_auto_school.domain.model.LiveNotificationModel
+import com.tshikasi.tshikasi_auto_school.domain.model.LiveParticipantModel
+import com.tshikasi.tshikasi_auto_school.domain.model.LivePollModel
+import com.tshikasi.tshikasi_auto_school.domain.model.LiveReactionModel
+import com.tshikasi.tshikasi_auto_school.domain.model.LiveRecordingModel
+import com.tshikasi.tshikasi_auto_school.domain.model.LiveSessionFilters
+import com.tshikasi.tshikasi_auto_school.domain.model.LiveSessionModel
+import com.tshikasi.tshikasi_auto_school.domain.model.LiveStatus
+import com.tshikasi.tshikasi_auto_school.domain.model.LiveStreamStats
 import com.tshikasi.tshikasi_auto_school.domain.model.ManagerAccessLevel
 import com.tshikasi.tshikasi_auto_school.domain.model.MessageModel
 import com.tshikasi.tshikasi_auto_school.domain.model.MessageType
 import com.tshikasi.tshikasi_auto_school.domain.model.NotificationModel
 import com.tshikasi.tshikasi_auto_school.domain.model.NotificationPreferences
 import com.tshikasi.tshikasi_auto_school.domain.model.NotificationType
+import com.tshikasi.tshikasi_auto_school.domain.model.ParticipantRole
 import com.tshikasi.tshikasi_auto_school.domain.model.PaymentModel
+import com.tshikasi.tshikasi_auto_school.domain.model.PollVoteModel
 import com.tshikasi.tshikasi_auto_school.domain.model.ReportFrequency
 import com.tshikasi.tshikasi_auto_school.domain.model.SchoolDirectorModel
-import com.tshikasi.tshikasi_auto_school.domain.model.SchoolModel
 import com.tshikasi.tshikasi_auto_school.domain.model.SchoolTypeModel
+import com.tshikasi.tshikasi_auto_school.domain.model.SendChatMessageRequest
 import com.tshikasi.tshikasi_auto_school.domain.model.StateManagerModel
+import com.tshikasi.tshikasi_auto_school.domain.model.StreamInfoResponse
 import com.tshikasi.tshikasi_auto_school.domain.model.StudentAccountType
 import com.tshikasi.tshikasi_auto_school.domain.model.StudentAchievementModel
 import com.tshikasi.tshikasi_auto_school.domain.model.StudentModel
@@ -79,6 +99,7 @@ import com.tshikasi.tshikasi_auto_school.domain.model.TeacherModel
 import com.tshikasi.tshikasi_auto_school.domain.model.TeacherSubjectModel
 import com.tshikasi.tshikasi_auto_school.domain.model.TeacherType
 import com.tshikasi.tshikasi_auto_school.domain.model.TimetableModel
+import com.tshikasi.tshikasi_auto_school.domain.model.UpdateLiveSessionRequest
 import com.tshikasi.tshikasi_auto_school.domain.model.UserActivityLogModel
 import com.tshikasi.tshikasi_auto_school.domain.model.UserModel
 import com.tshikasi.tshikasi_auto_school.domain.model.UserSessionModel
@@ -98,14 +119,17 @@ import com.tshikasi.tshikasi_auto_school.domain.repository.GuardianRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.LessonProgressRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.LessonRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.LiveChatRepository
+import com.tshikasi.tshikasi_auto_school.domain.repository.LiveNotificationRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.LiveParticipantRepository
-import com.tshikasi.tshikasi_auto_school.domain.repository.*
+import com.tshikasi.tshikasi_auto_school.domain.repository.LivePollRepository
+import com.tshikasi.tshikasi_auto_school.domain.repository.LiveReactionRepository
+import com.tshikasi.tshikasi_auto_school.domain.repository.LiveRecordingRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.LiveSessionRepository
+import com.tshikasi.tshikasi_auto_school.domain.repository.LiveStatsRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.MessageRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.NotificationRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.PaymentRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.SchoolDirectorRepository
-import com.tshikasi.tshikasi_auto_school.domain.repository.SchoolRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.SchoolTypeRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.StateManagerRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.StudentAchievementRepository
@@ -115,6 +139,7 @@ import com.tshikasi.tshikasi_auto_school.domain.repository.SubscriptionRepositor
 import com.tshikasi.tshikasi_auto_school.domain.repository.SystemAdministratorRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.TeacherAssignmentRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.TeacherCertificationRepository
+import com.tshikasi.tshikasi_auto_school.domain.repository.TeacherLiveStats
 import com.tshikasi.tshikasi_auto_school.domain.repository.TeacherRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.TeacherSubjectRepository
 import com.tshikasi.tshikasi_auto_school.domain.repository.TimetableRepository
@@ -1411,80 +1436,6 @@ class PaymentRepositoryImpl(
 
     override suspend fun getPaymentMethodDistribution(): Either<NetworkError, Map<String, Int>> {
         return Either.catch { dataSource.getPaymentMethodDistribution() }.mapLeft { it.toNetworkError() }
-    }
-}
-
-// SchoolRepositoryImpl
-class SchoolRepositoryImpl(
-    private val dataSource: SchoolDataSource
-) : SchoolRepository {
-
-    override suspend fun createSchool(school: SchoolModel): Either<NetworkError, SchoolModel> {
-        return Either.catch { dataSource.createSchool(school) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun getSchoolById(id: Long): Either<NetworkError, SchoolModel?> {
-        return Either.catch { dataSource.getSchoolById(id) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun getSchoolByCode(code: String): Either<NetworkError, SchoolModel?> {
-        return Either.catch { dataSource.getSchoolByCode(code) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun getAllSchools(active: Boolean?, schoolTypeId: Long?, communeId: Long?, page: Int, pageSize: Int): Either<NetworkError, List<SchoolModel>> {
-        return Either.catch { dataSource.getAllSchools(active, schoolTypeId, communeId, page, pageSize) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun getSchoolsByCommune(communeId: Long, page: Int, pageSize: Int): Either<NetworkError, List<SchoolModel>> {
-        return Either.catch { dataSource.getSchoolsByCommune(communeId, page, pageSize) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun getSchoolsByType(schoolTypeId: Long, page: Int, pageSize: Int): Either<NetworkError, List<SchoolModel>> {
-        return Either.catch { dataSource.getSchoolsByType(schoolTypeId, page, pageSize) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun searchSchools(query: String, communeId: Long?, page: Int, pageSize: Int): Either<NetworkError, List<SchoolModel>> {
-        return Either.catch { dataSource.searchSchools(query, communeId, page, pageSize) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun getTopSchoolsByStudents(limit: Int): Either<NetworkError, List<SchoolModel>> {
-        return Either.catch { dataSource.getTopSchoolsByStudents(limit) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun updateSchool(school: SchoolModel): Either<NetworkError, SchoolModel> {
-        return Either.catch { dataSource.updateSchool(school) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun updateSchoolStatus(id: Long, status: UserStatus): Either<NetworkError, Boolean> {
-        return Either.catch { dataSource.updateSchoolStatus(id, status) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun updateSchoolStatistics(id: Long): Either<NetworkError, Boolean> {
-        return Either.catch { dataSource.updateSchoolStatistics(id) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun updateSubscription(id: Long, plan: String?, expiresAt: String?): Either<NetworkError, Boolean> {
-        return Either.catch { dataSource.updateSubscription(id, plan, expiresAt) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun deleteSchool(id: Long): Either<NetworkError, Boolean> {
-        return Either.catch { dataSource.deleteSchool(id) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun countSchoolsByCommune(communeId: Long): Either<NetworkError, Int> {
-        return Either.catch { dataSource.countSchoolsByCommune(communeId) }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun countSchoolsByType(): Either<NetworkError, Map<Long, Int>> {
-        return Either.catch { dataSource.countSchoolsByType() }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun getTotalSchoolsCount(): Either<NetworkError, Int> {
-        return Either.catch { dataSource.getTotalSchoolsCount() }.mapLeft { it.toNetworkError() }
-    }
-
-    override suspend fun getSchoolPerformanceMetrics(schoolId: Long): Either<NetworkError, Map<String, Any>> {
-        return Either.catch { dataSource.getSchoolPerformanceMetrics(schoolId) }.mapLeft { it.toNetworkError() }
     }
 }
 

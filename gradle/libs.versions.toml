@@ -9,10 +9,13 @@ lifecycleRuntimeKtx = "2.8.6"
 activityCompose = "1.9.2"
 composeBom = "2024.02.00"
 
-# Firebase - Use versões mais recentes e compatíveis
-firebaseBom = "33.1.0" # Versão mais estável
+# Firebase - Only BOM version needed
+firebaseBom = "33.7.0" # Updated to latest stable version
 firebaseCrashlyticsBuildtools = "3.0.2"
+firebaseMessaging = "24.0.1"
+firebaseInappmessagingKtx = "21.0.2"
 constraintlayout = "2.2.1"
+# REMOVE: firebaseFirestoreKtx = "26.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -30,13 +33,12 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 
-# Firebase - Apenas o BOM
+# Firebase - BOM only, no versions for individual libraries
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
+firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx", version.ref = "firebaseMessaging" }
 firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
-
-# REMOVA todas as outras bibliotecas do Firebase daqui
-
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
